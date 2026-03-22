@@ -85,7 +85,13 @@ function AppShell() {
     <div className="App">
       <nav className="navbar">
         <div className="navbar-content">
-          <div className="navbar-brand">{firmDetails.name}</div>
+          <NavLink to="/" end className="navbar-brand">
+            <strong>{firmDetails.name}</strong>
+            <span>{firmDetails.address}</span>
+            <span>
+              GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
+            </span>
+          </NavLink>
           <div className="nav-links">
             <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
               Create Invoice

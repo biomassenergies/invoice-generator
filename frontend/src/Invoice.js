@@ -5,7 +5,6 @@ import {
   createInvoice,
   downloadInvoicePDF
 } from './api';
-import firmDetails from './firmDetails';
 import './Invoice.css';
 
 function Invoice() {
@@ -232,17 +231,8 @@ function Invoice() {
   return (
     <div className="invoice-container">
       <header className="invoice-header">
-        <h1>{firmDetails.name}</h1>
-        <p>Local Billing &amp; Inventory System</p>
-        <div className="firm-card">
-          <div className="firm-card-line">{firmDetails.address}</div>
-          <div className="firm-card-line">
-            GSTN: {firmDetails.gstn} | State: {firmDetails.state}
-          </div>
-          <div className="firm-card-line">
-            Contact: {firmDetails.contactNo} | Email: {firmDetails.email}
-          </div>
-        </div>
+        <h1>Create Invoice</h1>
+        <p>Prepare invoices quickly with customer, product, tax, and transport details in one flow.</p>
       </header>
 
       <div className="invoice-content">

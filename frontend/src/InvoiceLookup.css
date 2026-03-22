@@ -1,46 +1,48 @@
 .invoice-lookup-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 24%),
+    linear-gradient(180deg, #eef2ff 0%, #f7f8fc 100%);
+  padding: 18px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .lookup-header {
-  text-align: center;
-  color: white;
-  margin-bottom: 30px;
+  max-width: 1280px;
+  margin: 0 auto 18px;
+  color: #243252;
   animation: slideDown 0.6s ease-out;
 }
 
 .lookup-header h1 {
-  font-size: 2.5em;
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
   margin: 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .lookup-header p {
-  font-size: 1.1em;
-  margin: 10px 0 0 0;
-  opacity: 0.9;
+  font-size: 0.95rem;
+  margin: 8px 0 0;
+  color: #5f6880;
 }
 
 .lookup-content {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 20px;
-  max-width: 1400px;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 16px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 
 /* Invoice List Panel */
 .invoice-list-panel {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 16px 34px rgba(32, 42, 77, 0.08);
+  border: 1px solid rgba(122, 138, 178, 0.16);
   display: flex;
   flex-direction: column;
-  max-height: 70vh;
+  max-height: calc(100vh - 190px);
 }
 
 .search-box {
@@ -49,17 +51,18 @@
 
 .search-input {
   width: 100%;
-  padding: 12px 15px;
-  border: 2px solid #667eea;
-  border-radius: 8px;
-  font-size: 1em;
+  padding: 11px 13px;
+  border: 1px solid #cfd5e6;
+  border-radius: 10px;
+  font-size: 0.94rem;
   transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #764ba2;
-  box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+  border-color: #6a7de0;
+  box-shadow: 0 0 0 3px rgba(106, 125, 224, 0.14);
 }
 
 .invoice-list {
@@ -89,25 +92,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 15px;
+  padding: 11px 13px;
   margin-bottom: 8px;
-  background: #f8f9fa;
-  border: 2px solid transparent;
-  border-radius: 8px;
+  background: #f7f8fc;
+  border: 1px solid transparent;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .invoice-item:hover {
-  background: #e8eef5;
-  border-color: #667eea;
-  transform: translateX(5px);
+  background: #edf1fb;
+  border-color: #6a7de0;
+  transform: translateX(3px);
 }
 
 .invoice-item.active {
-  background: #667eea;
+  background: linear-gradient(135deg, #5d71d6 0%, #6f4cb0 100%);
   color: white;
-  border-color: #667eea;
+  border-color: transparent;
   font-weight: 600;
 }
 
@@ -117,7 +120,7 @@
 
 .invoice-item-arrow {
   color: #667eea;
-  font-size: 1.2em;
+  font-size: 1rem;
   transition: all 0.3s ease;
 }
 
@@ -145,11 +148,12 @@
 
 /* Invoice Details Panel */
 .invoice-details-panel {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  max-height: 70vh;
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 16px 34px rgba(32, 42, 77, 0.08);
+  border: 1px solid rgba(122, 138, 178, 0.16);
+  max-height: calc(100vh - 190px);
   overflow-y: auto;
 }
 
@@ -171,15 +175,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #eee;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e4e8f1;
 }
 
 .details-header h2 {
   margin: 0;
-  color: #333;
-  font-size: 1.8em;
+  color: #293248;
+  font-size: 1.4rem;
 }
 
 .action-buttons {
@@ -189,17 +193,17 @@
 
 .btn-download,
 .btn-print {
-  padding: 10px 20px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.95em;
+  border-radius: 10px;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
 }
 
 .btn-download {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5d71d6 0%, #6f4cb0 100%);
   color: white;
 }
 
@@ -209,7 +213,7 @@
 }
 
 .btn-print {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #f08d66 0%, #de5d4f 100%);
   color: white;
 }
 
@@ -223,8 +227,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
-  font-size: 1.2em;
+  color: #7b8190;
+  font-size: 1rem;
   text-align: center;
 }
 
@@ -234,17 +238,18 @@
 }
 
 .details-section h3 {
-  color: #667eea;
+  color: #5d71d6;
   margin: 0 0 15px 0;
-  font-size: 1.2em;
-  border-bottom: 2px solid #667eea;
+  font-size: 1rem;
+  border-bottom: 1px solid #dbe1f0;
   padding-bottom: 8px;
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
-  padding: 10px 0;
+  gap: 16px;
+  padding: 9px 0;
   border-bottom: 1px solid #eee;
 }
 
@@ -256,12 +261,14 @@
   font-weight: 600;
   color: #666;
   flex: 0 0 40%;
+  font-size: 0.9rem;
 }
 
 .detail-value {
   color: #333;
   flex: 1;
   text-align: right;
+  font-size: 0.9rem;
 }
 
 /* Items Table */
@@ -269,6 +276,7 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
+  min-width: 620px;
 }
 
 .items-table thead {
@@ -276,17 +284,19 @@
 }
 
 .items-table th {
-  padding: 12px;
+  padding: 10px;
   text-align: left;
-  color: #667eea;
+  color: #5d71d6;
   font-weight: 600;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 1px solid #dbe1f0;
+  font-size: 0.88rem;
 }
 
 .items-table td {
-  padding: 12px;
+  padding: 10px;
   border-bottom: 1px solid #eee;
   color: #333;
+  font-size: 0.88rem;
 }
 
 .items-table tbody tr:hover {
@@ -299,10 +309,10 @@
 
 /* Total Section */
 .total-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #5d71d6 0%, #6f4cb0 100%);
   color: white;
-  padding: 20px;
-  border-radius: 8px;
+  padding: 16px 18px;
+  border-radius: 14px;
   margin-top: 20px;
 }
 
@@ -320,7 +330,7 @@
 }
 
 .total-value {
-  font-size: 1.4em;
+  font-size: 1.18rem;
   font-weight: 700;
 }
 
@@ -349,8 +359,8 @@
 }
 
 @media (max-width: 768px) {
-  .lookup-header h1 {
-    font-size: 1.8em;
+  .invoice-lookup-container {
+    padding: 12px;
   }
 
   .details-header {
@@ -361,11 +371,13 @@
 
   .action-buttons {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .btn-download,
   .btn-print {
     flex: 1;
+    min-width: 140px;
   }
 
   .detail-row {
