@@ -118,11 +118,14 @@ function LandingPage() {
       <header className="site-header">
         <div className="site-header__inner">
           <div className="site-brand">
-            <strong>{firmDetails.name}</strong>
-            <span>{firmDetails.address}</span>
-            <span>
-              GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
-            </span>
+            <img src={`${process.env.PUBLIC_URL}/mae-logo.png`} alt={firmDetails.name} className="site-brand__logo" />
+            <div className="site-brand__copy">
+              <strong>{firmDetails.name}</strong>
+              <span>{firmDetails.address}</span>
+              <span>
+                GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
+              </span>
+            </div>
           </div>
           <div className="site-header__actions">
             <a href="#products" className="site-link">

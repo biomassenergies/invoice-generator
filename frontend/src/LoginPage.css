@@ -17,6 +17,14 @@
   box-shadow: 0 26px 60px rgba(25, 25, 55, 0.22);
 }
 
+.login-logo {
+  width: 74px;
+  height: 74px;
+  object-fit: contain;
+  display: block;
+  margin: 0 0 14px;
+}
+
 .login-eyebrow {
   margin: 0 0 8px;
   font-size: 0.78rem;

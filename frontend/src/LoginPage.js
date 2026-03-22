@@ -28,6 +28,7 @@ function LoginPage({ firmName, onLoginSuccess }) {
   return (
     <div className="login-page">
       <div className="login-card">
+        <img src={`${process.env.PUBLIC_URL}/mae-logo.png`} alt={firmName} className="login-logo" />
         <p className="login-eyebrow">Secure Invoice Portal</p>
         <h1>{firmName}</h1>
         <p className="login-subtitle">

@@ -22,6 +22,7 @@ function AppLoading() {
   return (
     <div className="app-loading-screen">
       <div className="app-loading-card">
+        <img src={`${process.env.PUBLIC_URL}/mae-logo.png`} alt={firmDetails.name} className="brand-logo loading-logo" />
         <h1>{firmDetails.name}</h1>
         <p>Loading secure workspace...</p>
       </div>
@@ -35,11 +36,14 @@ function AdminLayout({ authEnabled, onLogout }) {
       <nav className="navbar">
         <div className="navbar-content">
           <NavLink to="/admin/create" className="navbar-brand">
-            <strong>{firmDetails.name}</strong>
-            <span>{firmDetails.address}</span>
-            <span>
-              GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
-            </span>
+            <img src={`${process.env.PUBLIC_URL}/mae-logo.png`} alt={firmDetails.name} className="brand-logo" />
+            <div className="brand-copy">
+              <strong>{firmDetails.name}</strong>
+              <span>{firmDetails.address}</span>
+              <span>
+                GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
+              </span>
+            </div>
           </NavLink>
           <div className="nav-links">
             <NavLink
