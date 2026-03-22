@@ -99,3 +99,11 @@
   color: #b63232;
   font-weight: 600;
 }
+
+.login-back-link {
+  display: inline-flex;
+  margin-top: 18px;
+  color: #5c6488;
+  text-decoration: none;
+  font-weight: 600;
+}

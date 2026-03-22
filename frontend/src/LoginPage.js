@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { login } from './api';
 import firmDetails from './firmDetails';
 import './LoginPage.css';
@@ -57,6 +58,10 @@ function LoginPage({ firmName, onLoginSuccess }) {
             {isSubmitting ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+
+        <Link to="/" className="login-back-link">
+          Back to public site
+        </Link>
       </div>
     </div>
   );

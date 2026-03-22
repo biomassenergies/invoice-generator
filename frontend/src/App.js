@@ -1,12 +1,115 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, NavLink, Route, Routes } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Navigate,
+  NavLink,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate
+} from 'react-router-dom';
 import Invoice from './Invoice';
 import InvoiceLookup from './InvoiceLookup';
 import Dashboard from './Dashboard';
 import LoginPage from './LoginPage';
+import LandingPage from './LandingPage';
 import firmDetails from './firmDetails';
 import { getAuthStatus, logout } from './api';
 import './App.css';
+
+function AppLoading() {
+  return (
+    <div className="app-loading-screen">
+      <div className="app-loading-card">
+        <h1>{firmDetails.name}</h1>
+        <p>Loading secure workspace...</p>
+      </div>
+    </div>
+  );
+}
+
+function AdminLayout({ authEnabled, onLogout }) {
+  return (
+    <div className="App">
+      <nav className="navbar">
+        <div className="navbar-content">
+          <NavLink to="/admin/create" className="navbar-brand">
+            <strong>{firmDetails.name}</strong>
+            <span>{firmDetails.address}</span>
+            <span>
+              GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
+            </span>
+          </NavLink>
+          <div className="nav-links">
+            <NavLink
+              to="/admin/create"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Create Invoice
+            </NavLink>
+            <NavLink
+              to="/admin/lookup"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Lookup Invoice
+            </NavLink>
+            <NavLink
+              to="/admin/dashboard"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Dashboard
+            </NavLink>
+            <NavLink to="/" className="nav-link">
+              Public Site
+            </NavLink>
+            {authEnabled ? (
+              <button type="button" className="nav-link nav-button" onClick={onLogout}>
+                Log Out
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </nav>
+
+      <Outlet />
+    </div>
+  );
+}
+
+function OwnerLoginRoute({ authEnabled, authenticated, onLoginSuccess }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const nextPath = location.state?.from?.pathname || '/admin/create';
+
+  if (!authEnabled || authenticated) {
+    return <Navigate to={nextPath} replace />;
+  }
+
+  return (
+    <LoginPage
+      firmName={firmDetails.name}
+      onLoginSuccess={(data) => {
+        onLoginSuccess(data);
+        navigate(nextPath, { replace: true });
+      }}
+    />
+  );
+}
+
+function ProtectedAdminRoute({ authEnabled, authenticated }) {
+  const location = useLocation();
+
+  if (!authEnabled) {
+    return <Outlet />;
+  }
+
+  if (!authenticated) {
+    return <Navigate to="/owner-login" replace state={{ from: location }} />;
+  }
+
+  return <Outlet />;
+}
 
 function AppShell() {
   const [authState, setAuthState] = useState({
@@ -67,62 +170,44 @@ function AppShell() {
   };
 
   if (authState.loading) {
-    return (
-      <div className="app-loading-screen">
-        <div className="app-loading-card">
-          <h1>{firmDetails.name}</h1>
-          <p>Loading secure workspace...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (authState.enabled && !authState.authenticated) {
-    return <LoginPage firmName={firmDetails.name} onLoginSuccess={handleLoginSuccess} />;
+    return <AppLoading />;
   }
 
   return (
-    <div className="App">
-      <nav className="navbar">
-        <div className="navbar-content">
-          <NavLink to="/" end className="navbar-brand">
-            <strong>{firmDetails.name}</strong>
-            <span>{firmDetails.address}</span>
-            <span>
-              GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
-            </span>
-          </NavLink>
-          <div className="nav-links">
-            <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-              Create Invoice
-            </NavLink>
-            <NavLink
-              to="/lookup"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              Lookup Invoice
-            </NavLink>
-            <NavLink
-              to="/dashboard"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              Dashboard
-            </NavLink>
-            {authState.enabled ? (
-              <button type="button" className="nav-link nav-button" onClick={handleLogout}>
-                Log Out
-              </button>
-            ) : null}
-          </div>
-        </div>
-      </nav>
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route
+        path="/owner-login"
+        element={
+          <OwnerLoginRoute
+            authEnabled={authState.enabled}
+            authenticated={authState.authenticated}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        }
+      />
 
-      <Routes>
-        <Route path="/" element={<Invoice />} />
-        <Route path="/lookup" element={<InvoiceLookup />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
-    </div>
+      <Route
+        element={
+          <ProtectedAdminRoute
+            authEnabled={authState.enabled}
+            authenticated={authState.authenticated}
+          />
+        }
+      >
+        <Route
+          path="/admin"
+          element={<AdminLayout authEnabled={authState.enabled} onLogout={handleLogout} />}
+        >
+          <Route index element={<Navigate to="/admin/create" replace />} />
+          <Route path="create" element={<Invoice />} />
+          <Route path="lookup" element={<InvoiceLookup />} />
+          <Route path="dashboard" element={<Dashboard />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
