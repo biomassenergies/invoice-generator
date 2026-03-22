@@ -151,6 +151,32 @@ function saveInvoiceRow(rowData) {
   }
 }
 
+function saveCustomerRow(rowData) {
+  try {
+    const workbook = XLSX.readFile(EXCEL_FILE);
+    let ws = workbook.Sheets['CUSTOMER DETAILS'];
+
+    if (!ws) {
+      ws = XLSX.utils.aoa_to_sheet([Object.keys(rowData)]);
+      workbook.Sheets['CUSTOMER DETAILS'] = ws;
+      if (!workbook.SheetNames.includes('CUSTOMER DETAILS')) {
+        workbook.SheetNames.push('CUSTOMER DETAILS');
+      }
+    }
+
+    const data = XLSX.utils.sheet_to_json(ws);
+    data.push(rowData);
+
+    ws = XLSX.utils.json_to_sheet(data);
+    workbook.Sheets['CUSTOMER DETAILS'] = ws;
+    XLSX.writeFile(workbook, EXCEL_FILE);
+    return true;
+  } catch (err) {
+    console.error('Error saving customer:', err.message);
+    return false;
+  }
+}
+
 /**
  * Check if invoice number exists
  */
@@ -172,6 +198,7 @@ module.exports = {
   getCustomers,
   getProducts,
   getInvoices,
+  saveCustomerRow,
   saveInvoiceRow,
   invoiceExists
 };

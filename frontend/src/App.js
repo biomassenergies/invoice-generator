@@ -12,6 +12,7 @@ import {
 import Invoice from './Invoice';
 import InvoiceLookup from './InvoiceLookup';
 import Dashboard from './Dashboard';
+import CustomerForm from './CustomerForm';
 import LoginPage from './LoginPage';
 import LandingPage from './LandingPage';
 import firmDetails from './firmDetails';
@@ -63,6 +64,12 @@ function AdminLayout({ authEnabled, onLogout }) {
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
               Dashboard
+            </NavLink>
+            <NavLink
+              to="/admin/customers"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Add Customer
             </NavLink>
             <NavLink to="/" className="nav-link">
               Public Site
@@ -207,6 +214,7 @@ function AppShell() {
           <Route path="create" element={<Invoice />} />
           <Route path="lookup" element={<InvoiceLookup />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="customers" element={<CustomerForm />} />
         </Route>
       </Route>
 

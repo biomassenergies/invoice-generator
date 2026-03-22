@@ -1,0 +1,141 @@
+.customer-form-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 24%),
+    linear-gradient(180deg, #eef2ff 0%, #f7f8fc 100%);
+  padding: 18px;
+}
+
+.customer-form-shell {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+.customer-form-header {
+  margin-bottom: 16px;
+  color: #243252;
+}
+
+.customer-form-kicker {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #7b5a1d;
+  font-weight: 700;
+}
+
+.customer-form-header h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+}
+
+.customer-form-header p {
+  margin: 8px 0 0;
+  color: #5f6880;
+}
+
+.customer-form-card {
+  background: rgba(255, 255, 255, 0.96);
+  border-radius: 22px;
+  border: 1px solid rgba(122, 138, 178, 0.16);
+  box-shadow: 0 18px 38px rgba(32, 42, 77, 0.08);
+  padding: 24px;
+}
+
+.customer-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.customer-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #485267;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.customer-form-grid input,
+.customer-form-grid textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid #cfd5e6;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.customer-form-grid input:focus,
+.customer-form-grid textarea:focus {
+  outline: none;
+  border-color: #6378df;
+  box-shadow: 0 0 0 3px rgba(99, 120, 223, 0.12);
+}
+
+.customer-form-span-2 {
+  grid-column: span 2;
+}
+
+.customer-form-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.customer-form-actions button {
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5d71d6 0%, #6f4cb0 100%);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.customer-form-actions button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.customer-form-alert {
+  padding: 13px 15px;
+  border-radius: 10px;
+  margin-bottom: 18px;
+  font-weight: 600;
+}
+
+.customer-form-alert.error {
+  background: #ffe9e8;
+  color: #b63232;
+}
+
+.customer-form-alert.success {
+  background: #e6f6e5;
+  color: #246a2e;
+}
+
+@media (max-width: 720px) {
+  .customer-form-page {
+    padding: 12px;
+  }
+
+  .customer-form-card {
+    padding: 18px 16px;
+  }
+
+  .customer-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-form-span-2 {
+    grid-column: span 1;
+  }
+
+  .customer-form-actions button {
+    width: 100%;
+  }
+}

@@ -26,6 +26,7 @@ export const logout = () => API.post('/auth/logout');
 
 // Customers
 export const getCustomers = () => API.get('/customers');
+export const createCustomer = (data) => API.post('/customers', data);
 
 // Products
 export const getProducts = () => API.get('/products');

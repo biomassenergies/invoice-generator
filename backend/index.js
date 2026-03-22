@@ -17,6 +17,7 @@ const {
   getCustomers: getExcelCustomers,
   getInvoices: getExcelInvoices,
   getProducts: getExcelProducts,
+  saveCustomerRow,
   saveInvoiceRow,
   invoiceExists: excelInvoiceExists
 } = require('./excelData');
@@ -437,6 +438,65 @@ app.get('/api/customers', async (req, res) => {
   } catch (err) {
     console.error('Error fetching customers:', err);
     res.status(500).json({ error: 'Error fetching customers', details: err.message });
+  }
+});
+
+app.post('/api/customers', async (req, res) => {
+  try {
+    const {
+      code = '',
+      customerName = '',
+      address = '',
+      gstn = '',
+      stateName = '',
+      pinCode = '',
+      email = ''
+    } = req.body || {};
+
+    const payload = {
+      CODE: String(code).trim(),
+      'Cust Name': String(customerName).trim(),
+      Address: String(address).trim(),
+      GSTN: String(gstn).trim(),
+      'State Name': String(stateName).trim(),
+      'Pin Code': String(pinCode).trim(),
+      Email: String(email).trim()
+    };
+
+    if (!payload.CODE || !payload['Cust Name']) {
+      return res.status(400).json({ error: 'CODE and Cust Name are required' });
+    }
+
+    const existingCustomers = await getCustomerDirectory();
+    const normalizedCode = normalizeEntityName(payload.CODE);
+    const normalizedCustomerName = normalizeEntityName(payload['Cust Name']);
+
+    const duplicateCustomer = existingCustomers.find((customer) => {
+      const existingCode = normalizeEntityName(customer.CODE || customer.CODE_1);
+      const existingName = normalizeEntityName(customer['Cust Name'] || customer['Customer Name']);
+      return existingCode === normalizedCode || existingName === normalizedCustomerName;
+    });
+
+    if (duplicateCustomer) {
+      return res.status(400).json({
+        error: 'Customer with the same code or name already exists'
+      });
+    }
+
+    if (DATA_MODE === 'local') {
+      saveCustomerRow(payload);
+    } else {
+      await addRowToSheet('CUSTOMER DETAILS', payload);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Customer added successfully',
+      customer: payload
+    });
+  } catch (err) {
+    console.error('Error creating customer:', err);
+    return res.status(500).json({ error: 'Error creating customer', details: err.message });
   }
 });
 
