@@ -131,6 +131,14 @@ async function getCustomerDirectory() {
   return (await getSheetData('CUSTOMER DETAILS')).data;
 }
 
+async function getProductDirectory() {
+  if (DATA_MODE === 'local') {
+    return getExcelProducts().data;
+  }
+
+  return (await getSheetData('PRODUCT TABLE')).data;
+}
+
 function findCustomerNameField(customers) {
   const headers = Object.keys(customers[0] || {});
   return headers.find((header) => header.toLowerCase().includes('name')) || 'Customer Name';
@@ -184,7 +192,18 @@ function parseInvoiceDate(value) {
     return null;
   }
 
+  if (typeof value === 'number' && value > 30000 && value < 60000) {
+    const utcDays = Math.floor(value - 25569);
+    return new Date(utcDays * 86400 * 1000);
+  }
+
   const raw = String(value).trim();
+  const numeric = Number(raw);
+  if (Number.isFinite(numeric) && numeric > 30000 && numeric < 60000) {
+    const utcDays = Math.floor(numeric - 25569);
+    return new Date(utcDays * 86400 * 1000);
+  }
+
   const parsed = new Date(raw);
   if (!Number.isNaN(parsed.getTime())) {
     return parsed;
@@ -240,6 +259,8 @@ function normalizeInvoiceRow(row) {
     amount,
     total,
     hsn: row['HSN Code'] || '',
+    destination: String(row.Destination || '').trim(),
+    igstRate: parseNumericValue(row.IGST),
     invoiceDate,
     month: invoiceDate ? invoiceDate.getMonth() + 1 : parseNumericValue(row.Month),
     year: invoiceDate ? invoiceDate.getFullYear() : parseNumericValue(row.Year)
@@ -260,6 +281,17 @@ function inferProductCategory(productName) {
   if (name.includes('SAWDUST')) return 'Sawdust';
 
   return 'Other';
+}
+
+function normalizeEntityName(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
+}
+
+function getUniqueValues(values) {
+  return [...new Set(values.filter(Boolean))];
 }
 
 function sortMetricEntries(metricMap, metricKey) {
@@ -452,10 +484,13 @@ app.get('/api/dashboard', async (req, res) => {
   try {
     const { year, month, customer, product } = req.query;
 
-    const invoiceRows =
+    const [invoiceRows, customerDirectory, productDirectory] = await Promise.all([
       DATA_MODE === 'local'
-        ? getExcelInvoices().data
-        : (await getSheetData('INVOICE DETAILS')).data;
+        ? Promise.resolve(getExcelInvoices().data)
+        : getSheetData('INVOICE DETAILS').then((result) => result.data),
+      getCustomerDirectory(),
+      getProductDirectory()
+    ]);
 
     const normalizedRows = invoiceRows
       .map(normalizeInvoiceRow)
@@ -484,7 +519,8 @@ app.get('/api/dashboard', async (req, res) => {
         uniqueInvoices.set(row.invoiceNumber, {
           invoiceNumber: row.invoiceNumber,
           customer: row.customer,
-          total: 0
+          total: 0,
+          invoiceDate: row.invoiceDate
         });
       }
 
@@ -496,8 +532,26 @@ app.get('/api/dashboard', async (req, res) => {
     const productTotals = {};
     const productFrequency = {};
     const categoryTotals = {};
+    const destinationTotals = {};
+    const gstModeTotals = {
+      interstate: { sales: 0, invoices: 0 },
+      intrastate: { sales: 0, invoices: 0 }
+    };
     let totalSales = 0;
     let totalQuantity = 0;
+
+    const allCustomerInvoiceCounts = {};
+    const allCustomerSales = {};
+    const customerLastSeen = {};
+
+    normalizedRows.forEach((row) => {
+      allCustomerInvoiceCounts[row.customer] = (allCustomerInvoiceCounts[row.customer] || 0) + 1;
+      allCustomerSales[row.customer] = (allCustomerSales[row.customer] || 0) + row.total;
+
+      if (row.invoiceDate && (!customerLastSeen[row.customer] || row.invoiceDate > customerLastSeen[row.customer])) {
+        customerLastSeen[row.customer] = row.invoiceDate;
+      }
+    });
 
     filteredRows.forEach((row) => {
       totalSales += row.total;
@@ -531,6 +585,21 @@ app.get('/api/dashboard', async (req, res) => {
         categoryTotals[category] = { sales: 0 };
       }
       categoryTotals[category].sales += row.total;
+
+      if (row.destination) {
+        destinationTotals[row.destination] = (destinationTotals[row.destination] || 0) + row.total;
+      }
+
+      const gstMode = parseNumericValue(row.igstRate) > 0 ? 'interstate' : 'intrastate';
+      gstModeTotals[gstMode].sales += row.total;
+    });
+
+    uniqueInvoices.forEach((invoice) => {
+      const invoiceRowsForNumber = filteredRows.filter((row) => row.invoiceNumber === invoice.invoiceNumber);
+      const gstMode = invoiceRowsForNumber.some((row) => parseNumericValue(row.igstRate) > 0)
+        ? 'interstate'
+        : 'intrastate';
+      gstModeTotals[gstMode].invoices += 1;
     });
 
     const topCustomers = sortMetricEntries(
@@ -547,6 +616,70 @@ app.get('/api/dashboard', async (req, res) => {
     const frequentProducts = sortMetricEntries(productFrequency, 'count').slice(0, 8);
     const topProducts = sortMetricEntries(productTotals, 'sales').slice(0, 8);
     const categorySplit = sortMetricEntries(categoryTotals, 'sales');
+    const topDestinations = Object.entries(destinationTotals)
+      .map(([name, sales]) => ({ name, sales }))
+      .sort((a, b) => b.sales - a.sales || a.name.localeCompare(b.name))
+      .slice(0, 8);
+
+    const invoiceValues = [...uniqueInvoices.values()]
+      .map((invoice) => invoice.total)
+      .sort((a, b) => a - b);
+    const medianInvoiceValue = invoiceValues.length === 0
+      ? 0
+      : invoiceValues.length % 2 === 1
+        ? invoiceValues[Math.floor(invoiceValues.length / 2)]
+        : (invoiceValues[invoiceValues.length / 2 - 1] + invoiceValues[invoiceValues.length / 2]) / 2;
+
+    const top5CustomerSales = topCustomers.slice(0, 5).reduce((sum, entry) => sum + entry.sales, 0);
+    const top5ProductSales = topProducts.slice(0, 5).reduce((sum, entry) => sum + entry.sales, 0);
+
+    const customerMasterNames = getUniqueValues(
+      customerDirectory.map((entry) => entry['Cust Name'] || entry['Customer Name'] || entry.Name)
+    );
+    const soldCustomerNames = getUniqueValues(normalizedRows.map((row) => row.customer));
+    const normalizedCustomerMaster = new Set(customerMasterNames.map(normalizeEntityName));
+    const normalizedSoldCustomers = new Set(soldCustomerNames.map(normalizeEntityName));
+
+    const invoiceOnlyCustomers = soldCustomerNames
+      .filter((name) => !normalizedCustomerMaster.has(normalizeEntityName(name)))
+      .sort((a, b) => a.localeCompare(b));
+    const masterOnlyCustomers = customerMasterNames
+      .filter((name) => !normalizedSoldCustomers.has(normalizeEntityName(name)))
+      .sort((a, b) => a.localeCompare(b));
+
+    const customerVariantsMap = {};
+    soldCustomerNames.forEach((name) => {
+      const key = normalizeEntityName(name);
+      customerVariantsMap[key] = customerVariantsMap[key] || new Set();
+      customerVariantsMap[key].add(name);
+    });
+
+    const customerVariants = Object.values(customerVariantsMap)
+      .filter((variants) => variants.size > 1)
+      .map((variants) => ({ canonical: [...variants][0], variants: [...variants] }))
+      .slice(0, 8);
+
+    const soldProductNames = getUniqueValues(normalizedRows.map((row) => row.product));
+    const productMasterNames = getUniqueValues(
+      productDirectory.map((entry) => entry['PRODUCT NAME'] || entry['Product Name'] || entry.Name)
+    );
+    const normalizedSoldProducts = new Set(soldProductNames.map(normalizeEntityName));
+    const unsoldProducts = productMasterNames
+      .filter((name) => !normalizedSoldProducts.has(normalizeEntityName(name)))
+      .sort((a, b) => a.localeCompare(b));
+
+    const dormantCutoff = new Date();
+    dormantCutoff.setMonth(dormantCutoff.getMonth() - 6);
+    const dormantCustomers = Object.entries(customerLastSeen)
+      .filter(([, invoiceDate]) => invoiceDate < dormantCutoff)
+      .map(([name, invoiceDate]) => ({
+        name,
+        lastInvoiceDate: invoiceDate.toISOString().slice(0, 10),
+        invoices: allCustomerInvoiceCounts[name] || 0,
+        sales: allCustomerSales[name] || 0
+      }))
+      .sort((a, b) => a.lastInvoiceDate.localeCompare(b.lastInvoiceDate))
+      .slice(0, 8);
 
     res.json({
       filters: {
@@ -566,13 +699,38 @@ app.get('/api/dashboard', async (req, res) => {
         totalQuantity,
         invoiceCount: uniqueInvoices.size,
         customerCount: new Set(filteredRows.map((row) => row.customer)).size,
-        averageInvoiceValue: uniqueInvoices.size ? totalSales / uniqueInvoices.size : 0
+        averageInvoiceValue: uniqueInvoices.size ? totalSales / uniqueInvoices.size : 0,
+        medianInvoiceValue
+      },
+      insights: {
+        concentration: {
+          top5CustomerShare: totalSales ? (top5CustomerSales / totalSales) * 100 : 0,
+          top5ProductShare: totalSales ? (top5ProductSales / totalSales) * 100 : 0,
+          topCustomerSales: topCustomers[0]?.sales || 0,
+          topProductSales: topProducts[0]?.sales || 0
+        },
+        dormantCustomers,
+        marketMix: {
+          interstateSales: gstModeTotals.interstate.sales,
+          interstateInvoices: gstModeTotals.interstate.invoices,
+          intrastateSales: gstModeTotals.intrastate.sales,
+          intrastateInvoices: gstModeTotals.intrastate.invoices
+        },
+        dataQuality: {
+          invoiceOnlyCustomerCount: invoiceOnlyCustomers.length,
+          masterOnlyCustomerCount: masterOnlyCustomers.length,
+          invoiceOnlyCustomers: invoiceOnlyCustomers.slice(0, 8),
+          masterOnlyCustomers: masterOnlyCustomers.slice(0, 8),
+          customerVariants,
+          unsoldProducts
+        }
       },
       topCustomers,
       frequentCustomers,
       frequentProducts,
       topProducts,
-      categorySplit
+      categorySplit,
+      topDestinations
     });
   } catch (err) {
     console.error('Error building dashboard:', err);
