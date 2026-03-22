@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import firmDetails from './firmDetails';
 import './LandingPage.css';
@@ -14,6 +14,7 @@ const manufacturingSteps = [
 const products = [
   {
     title: 'Biomass Briquette',
+    image: 'https://5.imimg.com/data5/SELLER/Default/2024/2/391098779/TV/ZD/CZ/56292250/white-coal-biomass-briquette-250x250.jpeg',
     points: [
       'High-density eco-friendly fuel',
       'Made from organic waste such as sawdust, groundnut shells, and agro residues',
@@ -25,6 +26,7 @@ const products = [
   },
   {
     title: 'Biomass Pellet',
+    image: 'https://5.imimg.com/data5/SELLER/Default/2023/3/IP/JJ/HF/56292250/6mm-saw-dust-pellets-250x250.jpg',
     points: [
       'Cylindrical biofuel',
       'Size: 6-8 mm',
@@ -35,6 +37,7 @@ const products = [
   },
   {
     title: 'DOC (De-Oiled Cakes)',
+    image: 'https://5.imimg.com/data5/SELLER/Default/2023/3/ZD/EU/UI/56292250/cashew-de-oiled-cake-250x250.jpg',
     points: ['Examples: Sal Seed, Cashew'],
     subheading: 'Functions',
     details: ['Natural binder', 'Calorific booster', 'Ideal for low-lignin materials like rice husk and straw']
@@ -53,6 +56,7 @@ const products = [
   },
   {
     title: 'Biomass Rice Husk',
+    image: 'https://5.imimg.com/data5/SELLER/Default/2023/6/314440534/IE/TD/YN/56292250/rice-husk-250x250.jpg',
     points: ['Byproduct of rice milling', 'Outer shell of paddy grain'],
     subheading: 'Use',
     details: ['Suitable for biomass fuel processing and energy applications']
@@ -100,6 +104,8 @@ const advantages = [
 ];
 
 function LandingPage() {
+  const [isContactOpen, setIsContactOpen] = useState(false);
+
   return (
     <div className="landing-page">
       <header className="site-header">
@@ -141,9 +147,13 @@ function LandingPage() {
                 <a href="#products" className="hero-btn hero-btn--primary">
                   Explore Products
                 </a>
-                <a href="#contact" className="hero-btn hero-btn--secondary">
+                <button
+                  type="button"
+                  className="hero-btn hero-btn--secondary hero-btn--button"
+                  onClick={() => setIsContactOpen(true)}
+                >
                   Contact Us
-                </a>
+                </button>
               </div>
             </div>
             <div className="hero-panel">
@@ -195,6 +205,9 @@ function LandingPage() {
           <div className="product-grid product-grid--expanded">
             {products.map((product) => (
               <article key={product.title} className="product-card">
+                {product.image ? (
+                  <img className="product-image" src={product.image} alt={product.title} />
+                ) : null}
                 <strong>{product.title}</strong>
                 <ul className="product-points">
                   {product.points.map((point) => (
@@ -289,6 +302,11 @@ function LandingPage() {
               options, dependable supply, and consulting support for bio energy projects including
               machinery installation and plant setup.
             </p>
+            <p>
+              Mahalaxmi Agro Energies : Manufacturer & Supplier Of Biofuels - Manufacturer,
+              Wholesaler and Retail Traders of Biomass Briquettes, Biomass Pellets, Sawdust,
+              Biomass Stove & Cashew Cake since 2019 in Nagpur, Maharashtra.
+            </p>
           </section>
 
           <section className="footer-column">
@@ -311,6 +329,35 @@ function LandingPage() {
           </section>
         </div>
       </footer>
+
+      {isContactOpen ? (
+        <div className="contact-modal-backdrop" onClick={() => setIsContactOpen(false)}>
+          <div
+            className="contact-modal"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contact-modal-title"
+          >
+            <button
+              type="button"
+              className="contact-modal-close"
+              onClick={() => setIsContactOpen(false)}
+              aria-label="Close contact details"
+            >
+              x
+            </button>
+            <p className="section-kicker">Get In Touch</p>
+            <h2 id="contact-modal-title">Customer Helpdesk</h2>
+            <div className="contact-modal-list">
+              <p>Email: biomassenergies@gmail.com</p>
+              <p>Devesh: 8550952303</p>
+              <p>Amit: 9890514547</p>
+              <p>Address: {firmDetails.address}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
