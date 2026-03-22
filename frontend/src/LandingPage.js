@@ -132,7 +132,7 @@ function LandingPage() {
               <p className="hero-kicker">Sustainable Biomass Fuel Solutions</p>
               <h1>Pellets and briquettes built for industrial and commercial energy needs.</h1>
               <p className="hero-text">
-                Energy for Tommorow. Eco-friendly, high-performance fuel alternatives designed to
+                Energy for Tomorrow. Eco-friendly, high-performance fuel alternatives designed to
                 support cleaner energy use, dependable supply, and practical commercial handling,
                 along with consulting support for bio energy project machinery installation and
                 plant setup.
