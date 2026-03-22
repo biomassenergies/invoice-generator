@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
-const { GoogleSpreadsheet } = require('google-spreadsheet');
 const { JWT } = require('google-auth-library');
 require('dotenv').config();
 
@@ -100,17 +99,35 @@ async function getFileMetadata() {
 }
 
 async function getGoogleSheetSource() {
-  const doc = new GoogleSpreadsheet(SHEET_ID, createAuthClient());
-  await doc.loadInfo();
+  const response = await sheetsRequest(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?includeGridData=false`
+  );
+  const spreadsheet = await response.json();
+
+  const sheetsByTitle = {};
+  (spreadsheet.sheets || []).forEach((sheet) => {
+    const properties = sheet.properties || {};
+    if (properties.title) {
+      sheetsByTitle[properties.title] = {
+        title: properties.title,
+        rowCount: properties.gridProperties?.rowCount || 0,
+        columnCount: properties.gridProperties?.columnCount || 0,
+        index: properties.index || 0
+      };
+    }
+  });
 
   return {
     type: 'google_sheet',
     metadata: {
       id: SHEET_ID,
-      name: doc.title,
+      name: spreadsheet.properties?.title || 'Google Sheet',
       mimeType: GOOGLE_SHEET_MIME_TYPE
     },
-    doc
+    doc: {
+      title: spreadsheet.properties?.title || 'Google Sheet',
+      sheetsByTitle
+    }
   };
 }
 
