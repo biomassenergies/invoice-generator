@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { createCustomer } from './api';
+import React, { useEffect, useMemo, useState } from 'react';
+import { createCustomer, getCustomers } from './api';
 import './CustomerForm.css';
 
 const initialForm = {
@@ -15,10 +15,47 @@ const initialForm = {
 function CustomerForm() {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
+  const [loadingReference, setLoadingReference] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [referenceCustomer, setReferenceCustomer] = useState(null);
+  const [existingCodes, setExistingCodes] = useState([]);
+
+  useEffect(() => {
+    const loadCustomerReference = async () => {
+      try {
+        setLoadingReference(true);
+        const response = await getCustomers();
+        const rows = response.data?.data || [];
+        const lastCustomer = rows.length ? rows[rows.length - 1] : null;
+        setReferenceCustomer(lastCustomer);
+        setExistingCodes(
+          rows
+            .map((row) => String(row.CODE || '').trim().toUpperCase())
+            .filter(Boolean)
+        );
+      } catch (err) {
+        setError('Unable to load latest customer reference');
+      } finally {
+        setLoadingReference(false);
+      }
+    };
+
+    loadCustomerReference();
+  }, []);
+
+  const normalizedCode = form.code.trim().toUpperCase();
+  const isDuplicateCode = useMemo(
+    () => Boolean(normalizedCode && existingCodes.includes(normalizedCode)),
+    [existingCodes, normalizedCode]
+  );
 
   const handleChange = (field, value) => {
+    if (field === 'code') {
+      setError('');
+      setSuccess('');
+    }
+
     setForm((current) => ({
       ...current,
       [field]: value
@@ -31,9 +68,19 @@ function CustomerForm() {
     setError('');
     setSuccess('');
 
+    if (isDuplicateCode) {
+      setError('This customer code already exists in CUSTOMER DETAILS');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await createCustomer(form);
       setSuccess(response.data?.message || 'Customer added successfully');
+      setReferenceCustomer(response.data?.customer || null);
+      if (normalizedCode) {
+        setExistingCodes((current) => [...current, normalizedCode]);
+      }
       setForm(initialForm);
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.details || err.message);
@@ -51,6 +98,48 @@ function CustomerForm() {
           <p>Add a new customer record directly to the owner master sheet.</p>
         </header>
 
+        <section className="customer-reference-card">
+          <div className="customer-reference-header">
+            <h2>Latest Customer Reference</h2>
+            <span>{loadingReference ? 'Loading...' : 'Use this to avoid duplicate codes'}</span>
+          </div>
+
+          {referenceCustomer ? (
+            <div className="customer-reference-grid">
+              <div>
+                <span>Latest CODE</span>
+                <strong>{referenceCustomer.CODE || '-'}</strong>
+              </div>
+              <div>
+                <span>Cust Name</span>
+                <strong>{referenceCustomer['Cust Name'] || '-'}</strong>
+              </div>
+              <div className="customer-reference-span-2">
+                <span>Address</span>
+                <strong>{referenceCustomer.Address || '-'}</strong>
+              </div>
+              <div>
+                <span>GSTN</span>
+                <strong>{referenceCustomer.GSTN || '-'}</strong>
+              </div>
+              <div>
+                <span>State Name</span>
+                <strong>{referenceCustomer['State Name'] || '-'}</strong>
+              </div>
+              <div>
+                <span>Pin Code</span>
+                <strong>{referenceCustomer['Pin Code'] || '-'}</strong>
+              </div>
+              <div>
+                <span>Email</span>
+                <strong>{referenceCustomer.Email || '-'}</strong>
+              </div>
+            </div>
+          ) : (
+            <p className="customer-reference-empty">No customer reference found yet.</p>
+          )}
+        </section>
+
         <form className="customer-form-card" onSubmit={handleSubmit}>
           {error ? <div className="customer-form-alert error">{error}</div> : null}
           {success ? <div className="customer-form-alert success">{success}</div> : null}
@@ -64,6 +153,11 @@ function CustomerForm() {
                 onChange={(event) => handleChange('code', event.target.value)}
                 required
               />
+              {isDuplicateCode ? (
+                <small className="customer-code-warning">
+                  This code already exists in the sheet. Please use a new code.
+                </small>
+              ) : null}
             </label>
 
             <label>
@@ -123,7 +217,7 @@ function CustomerForm() {
           </div>
 
           <div className="customer-form-actions">
-            <button type="submit" disabled={loading}>
+            <button type="submit" disabled={loading || isDuplicateCode}>
               {loading ? 'Saving...' : 'Save Customer'}
             </button>
           </div>
