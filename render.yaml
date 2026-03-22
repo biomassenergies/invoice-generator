@@ -3,7 +3,7 @@ services:
     name: invoice-generator
     runtime: node
     plan: free
-    buildCommand: cd frontend && npm ci && npm run build && cd ../backend && npm ci
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
     startCommand: cd backend && node index.js
     envVars:
       - key: NODE_VERSION
