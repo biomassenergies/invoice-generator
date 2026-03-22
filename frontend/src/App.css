@@ -17,6 +17,33 @@ code {
   width: 100%;
 }
 
+.app-loading-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #4d6bd8 0%, #7d4bb1 100%);
+}
+
+.app-loading-card {
+  padding: 28px 32px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18px 45px rgba(26, 28, 56, 0.24);
+  text-align: center;
+}
+
+.app-loading-card h1 {
+  margin: 0 0 10px;
+  color: #1e2758;
+}
+
+.app-loading-card p {
+  margin: 0;
+  color: #5c6488;
+}
+
 /* Navigation Bar */
 .navbar {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -57,6 +84,12 @@ code {
   transition: all 0.3s ease;
   display: inline-block;
   border: 2px solid transparent;
+}
+
+.nav-button {
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
 }
 
 .nav-link:hover {

@@ -1,8 +1,28 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || '/api'
+  baseURL: process.env.REACT_APP_API_BASE_URL || '/api',
+  withCredentials: true
 });
+
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const requestUrl = error.config?.url || '';
+    const isAuthEndpoint =
+      requestUrl.includes('/auth/login') || requestUrl.includes('/auth/status');
+
+    if (error.response?.status === 401 && !isAuthEndpoint) {
+      window.dispatchEvent(new CustomEvent('invoice-auth-required'));
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export const getAuthStatus = () => API.get('/auth/status');
+export const login = (password) => API.post('/auth/login', { password });
+export const logout = () => API.post('/auth/logout');
 
 // Customers
 export const getCustomers = () => API.get('/customers');

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const session = require('express-session');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
@@ -22,6 +23,10 @@ const {
 
 require('dotenv').config();
 
+const AUTH_PASSWORD = process.env.APP_PASSWORD?.trim() || '';
+const AUTH_ENABLED = Boolean(AUTH_PASSWORD);
+const SESSION_SECRET = process.env.SESSION_SECRET?.trim() || 'invoice-generator-dev-session-secret';
+
 function detectDataMode() {
   if (process.env.DATA_MODE) {
     return process.env.DATA_MODE;
@@ -29,6 +34,8 @@ function detectDataMode() {
 
   const hasSheetId = Boolean(process.env.SHEET_ID);
   const hasCredentials =
+    Boolean(process.env.GOOGLE_CREDENTIALS_JSON) ||
+    Boolean(process.env.CREDENTIALS_PATH) ||
     fs.existsSync(path.join(__dirname, 'credentials.json')) ||
     fs.existsSync(path.join(__dirname, 'credentials.json.json'));
 
@@ -45,9 +52,28 @@ function getSetupStatus() {
     dataMode: DATA_MODE,
     hasSheetId: Boolean(process.env.SHEET_ID),
     sheetId: process.env.SHEET_ID || null,
-    hasCredentials: Boolean(credentialsPath),
-    credentialsFile: credentialsPath ? path.basename(credentialsPath) : null
+    hasCredentials: Boolean(
+      process.env.GOOGLE_CREDENTIALS_JSON || process.env.CREDENTIALS_PATH || credentialsPath
+    ),
+    credentialsFile: process.env.CREDENTIALS_PATH
+      ? process.env.CREDENTIALS_PATH
+      : credentialsPath
+        ? path.basename(credentialsPath)
+        : null,
+    authEnabled: AUTH_ENABLED
   };
+}
+
+function isAuthenticated(req) {
+  return !AUTH_ENABLED || req.session?.isAuthenticated === true;
+}
+
+function requireAuth(req, res, next) {
+  if (isAuthenticated(req)) {
+    return next();
+  }
+
+  return res.status(401).json({ error: 'Authentication required' });
 }
 
 function parseNumericValue(value) {
@@ -213,8 +239,74 @@ const DATA_MODE = detectDataMode();
 const FRONTEND_BUILD_PATH = path.join(__dirname, '../frontend/build');
 
 const app = express();
-app.use(cors());
+app.set('trust proxy', 1);
+app.use(
+  cors({
+    origin: true,
+    credentials: true
+  })
+);
 app.use(bodyParser.json());
+app.use(
+  session({
+    name: 'invoice.sid',
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 12
+    }
+  })
+);
+
+// ============================================================================
+// PUBLIC ENDPOINTS
+// ============================================================================
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Invoice Generator API is running' });
+});
+
+app.get('/api/auth/status', (req, res) => {
+  res.json({
+    enabled: AUTH_ENABLED,
+    authenticated: isAuthenticated(req)
+  });
+});
+
+app.post('/api/auth/login', (req, res) => {
+  const submittedPassword = String(req.body?.password || '');
+
+  if (!AUTH_ENABLED) {
+    req.session.isAuthenticated = true;
+    return res.json({ success: true, authenticated: true, enabled: false });
+  }
+
+  if (submittedPassword !== AUTH_PASSWORD) {
+    return res.status(401).json({ error: 'Incorrect password' });
+  }
+
+  req.session.isAuthenticated = true;
+  return res.json({ success: true, authenticated: true, enabled: true });
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('invoice.sid');
+    res.json({ success: true });
+  });
+});
+
+app.use('/api', (req, res, next) => {
+  if (req.path === '/health' || req.path.startsWith('/auth/')) {
+    return next();
+  }
+
+  return requireAuth(req, res, next);
+});
 
 // ============================================================================
 // DEBUG ENDPOINTS
@@ -698,14 +790,6 @@ app.get('/api/invoice/:invoiceNumber/pdf', async (req, res) => {
     }
     res.status(500).json({ error: 'Error generating PDF', details: err.message });
   }
-});
-
-// ============================================================================
-// HEALTH CHECK
-// ============================================================================
-
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Invoice Generator API is running' });
 });
 
 if (fs.existsSync(FRONTEND_BUILD_PATH)) {
