@@ -103,6 +103,13 @@ const advantages = [
   }
 ];
 
+const whatsappLinks = {
+  devesh:
+    'https://wa.me/918550952303?text=Hello%20Mahalaxmi%20Agro%20Energies%2C%20I%20would%20like%20to%20know%20more%20about%20your%20products.',
+  amit:
+    'https://wa.me/919890514547?text=Hello%20Mahalaxmi%20Agro%20Energies%2C%20I%20would%20like%20to%20know%20more%20about%20your%20products.'
+};
+
 function LandingPage() {
   const [isContactOpen, setIsContactOpen] = useState(false);
 
@@ -314,6 +321,14 @@ function LandingPage() {
             <p>Address: {firmDetails.address}</p>
             <p>Email: biomassenergies@gmail.com</p>
             <p>Customer Helpdesk: Devesh - 8550952303, Amit - 9890514547</p>
+            <div className="footer-whatsapp-links">
+              <a href={whatsappLinks.devesh} target="_blank" rel="noreferrer">
+                WhatsApp Devesh
+              </a>
+              <a href={whatsappLinks.amit} target="_blank" rel="noreferrer">
+                WhatsApp Amit
+              </a>
+            </div>
           </section>
 
           <section className="footer-column footer-column--meta">
@@ -351,8 +366,18 @@ function LandingPage() {
             <h2 id="contact-modal-title">Customer Helpdesk</h2>
             <div className="contact-modal-list">
               <p>Email: biomassenergies@gmail.com</p>
-              <p>Devesh: 8550952303</p>
-              <p>Amit: 9890514547</p>
+              <p>
+                Devesh: 8550952303{' '}
+                <a href={whatsappLinks.devesh} target="_blank" rel="noreferrer">
+                  Chat on WhatsApp
+                </a>
+              </p>
+              <p>
+                Amit: 9890514547{' '}
+                <a href={whatsappLinks.amit} target="_blank" rel="noreferrer">
+                  Chat on WhatsApp
+                </a>
+              </p>
               <p>Address: {firmDetails.address}</p>
             </div>
           </div>

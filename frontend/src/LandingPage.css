@@ -374,6 +374,25 @@
   color: rgba(255, 255, 255, 0.76);
 }
 
+.footer-whatsapp-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.footer-whatsapp-links a,
+.contact-modal-list a {
+  color: #7ee787;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.footer-whatsapp-links a:hover,
+.contact-modal-list a:hover {
+  text-decoration: underline;
+}
+
 .footer-column--meta {
   display: flex;
   flex-direction: column;
