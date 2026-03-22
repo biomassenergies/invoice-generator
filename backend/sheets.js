@@ -9,8 +9,9 @@ const GOOGLE_SHEET_MIME_TYPE = 'application/vnd.google-apps.spreadsheet';
 const EXCEL_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 function getCredentialsPath() {
-  if (process.env.CREDENTIALS_PATH && fs.existsSync(process.env.CREDENTIALS_PATH)) {
-    return process.env.CREDENTIALS_PATH;
+  const configuredPath = process.env.CREDENTIALS_PATH?.trim();
+  if (configuredPath) {
+    return configuredPath;
   }
 
   const candidates = [
@@ -32,7 +33,7 @@ function getCredentialsPath() {
 function createAuthClient() {
   const creds = process.env.GOOGLE_CREDENTIALS_JSON
     ? JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON)
-    : require(getCredentialsPath());
+    : JSON.parse(fs.readFileSync(getCredentialsPath(), 'utf8'));
 
   return new JWT({
     email: creds.client_email,
