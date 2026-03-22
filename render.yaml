@@ -3,7 +3,7 @@ services:
     name: invoice-generator
     runtime: node
     plan: free
-    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
+    buildCommand: cd frontend && npm install && npm run build && cd ../backend && PUPPETEER_CACHE_DIR=./node_modules/.puppeteer_cache npm install
     startCommand: cd backend && node index.js
     envVars:
       - key: NODE_VERSION
@@ -12,3 +12,5 @@ services:
         value: production
       - key: DATA_MODE
         value: google
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/src/backend/node_modules/.puppeteer_cache
