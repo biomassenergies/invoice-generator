@@ -121,9 +121,6 @@ function LandingPage() {
             <a href="#advantages" className="site-link">
               Advantages
             </a>
-            <Link to="/owner-login" className="site-cta">
-              Owner Login
-            </Link>
           </div>
         </div>
       </header>
@@ -288,20 +285,39 @@ function LandingPage() {
           </div>
         </section>
 
-        <section className="owner-entry">
-          <div className="owner-entry__card">
-            <p className="section-kicker">Owner Access</p>
-            <h2>Secure access for invoice generation, lookup, and admin dashboard tools.</h2>
-            <p>
-              Administrative workflows are available only after owner sign-in and are intended for
-              authorized internal use.
-            </p>
-            <Link to="/owner-login" className="hero-btn hero-btn--primary">
-              Continue to Owner Login
-            </Link>
-          </div>
-        </section>
       </main>
+
+      <footer className="site-footer">
+        <div className="site-footer__grid">
+          <section className="footer-column">
+            <h3>About Us</h3>
+            <p>
+              {firmDetails.name} offers biomass pellets, briquettes, and related fuel-support
+              products for industrial and commercial energy needs. We focus on eco-friendly fuel
+              options, dependable supply, and practical delivery support for customers.
+            </p>
+          </section>
+
+          <section className="footer-column">
+            <h3>Get In Touch</h3>
+            <p>Address: {firmDetails.address}</p>
+            <p>Email: biomassenergies@gmail.com</p>
+            <p>Customer Helpdesk: Devesh - 8550952303, Amit - 9890514547</p>
+          </section>
+
+          <section className="footer-column footer-column--meta">
+            <p className="footer-note">
+              Biomass fuel solutions for cleaner industrial and commercial energy use.
+            </p>
+            <p className="footer-fineprint">
+              Internal use only:{' '}
+              <Link to="/owner-login" className="owner-fineprint-link">
+                Owner Access
+              </Link>
+            </p>
+          </section>
+        </div>
+      </footer>
     </div>
   );
 }
