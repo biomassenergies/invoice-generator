@@ -132,8 +132,10 @@ function LandingPage() {
               <p className="hero-kicker">Sustainable Biomass Fuel Solutions</p>
               <h1>Pellets and briquettes built for industrial and commercial energy needs.</h1>
               <p className="hero-text">
-                Eco-friendly, high-performance fuel alternatives designed to support cleaner energy
-                use, dependable supply, and practical commercial handling.
+                Energy for Tommorow. Eco-friendly, high-performance fuel alternatives designed to
+                support cleaner energy use, dependable supply, and practical commercial handling,
+                along with consulting support for bio energy project machinery installation and
+                plant setup.
               </p>
               <div className="hero-actions">
                 <a href="#products" className="hero-btn hero-btn--primary">
@@ -150,7 +152,7 @@ function LandingPage() {
                 <ul>
                   <li>Biomass pellets and briquettes for industrial and commercial use</li>
                   <li>Cleaner fuel alternatives built from organic and agro-waste sources</li>
-                  <li>Products supported by business-ready supply and owner-managed systems</li>
+                  <li>Consulting for bio energy projects, machinery installation, and plant setup</li>
                 </ul>
               </div>
             </div>
@@ -253,16 +255,6 @@ function LandingPage() {
                 <p>Higher density, uniform combustion, suitable for industrial boilers</p>
               </div>
             </article>
-            <article className="content-card" id="contact">
-              <p className="section-kicker">Business Details</p>
-              <h2>Reach us for supply and product discussions.</h2>
-              <div className="detail-stack">
-                <p>{firmDetails.address}</p>
-                <p>State: {firmDetails.state}</p>
-                <p>Contact: {firmDetails.contactNo}</p>
-                <p>Email: {firmDetails.email}</p>
-              </div>
-            </article>
           </div>
         </section>
 
@@ -294,7 +286,8 @@ function LandingPage() {
             <p>
               {firmDetails.name} offers biomass pellets, briquettes, and related fuel-support
               products for industrial and commercial energy needs. We focus on eco-friendly fuel
-              options, dependable supply, and practical delivery support for customers.
+              options, dependable supply, and consulting support for bio energy projects including
+              machinery installation and plant setup.
             </p>
           </section>
 
