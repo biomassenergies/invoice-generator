@@ -76,6 +76,39 @@ function requireAuth(req, res, next) {
   return res.status(401).json({ error: 'Authentication required' });
 }
 
+function getBrowserLaunchOptions() {
+  const configuredExecutablePath = process.env.PUPPETEER_EXECUTABLE_PATH?.trim();
+  let executablePath = configuredExecutablePath;
+
+  if (!executablePath && typeof puppeteer.executablePath === 'function') {
+    try {
+      executablePath = puppeteer.executablePath();
+    } catch (error) {
+      console.warn('Puppeteer executable path lookup failed:', error.message);
+    }
+  }
+
+  return {
+    headless: true,
+    executablePath,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+  };
+}
+
+async function launchPdfBrowser() {
+  const launchOptions = getBrowserLaunchOptions();
+
+  try {
+    return await puppeteer.launch({
+      ...launchOptions,
+      headless: 'new'
+    });
+  } catch (error) {
+    console.warn('Retrying Puppeteer launch with classic headless mode:', error.message);
+    return puppeteer.launch(launchOptions);
+  }
+}
+
 function parseNumericValue(value) {
   if (typeof value === 'number') {
     return Number.isFinite(value) ? value : 0;
@@ -759,10 +792,7 @@ app.get('/api/invoice/:invoiceNumber/pdf', async (req, res) => {
 
     const html = generateInvoiceHTML(invoiceData);
 
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    browser = await launchPdfBrowser();
 
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: 'domcontentloaded' });
