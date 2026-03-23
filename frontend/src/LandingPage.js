@@ -270,29 +270,31 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="message-grid">
-              <article className="message-card">
-                <strong>Manufacturer and Supplier</strong>
-                <p>
-                  Biomass briquettes, biomass pellets, sawdust, biomass stove, cashew cake and
-                  related support products for industrial, commercial, wholesale and retail demand.
-                </p>
-              </article>
-              <article className="message-card">
-                <strong>Consulting and Execution Guidance</strong>
-                <p>
-                  Support for bio energy projects including machinery installation, fuel planning,
-                  and plant setup advisory for customers moving toward biomass-led operations.
-                </p>
-              </article>
-              <article className="message-card">
-                <strong>Built for Commercial Use</strong>
-                <p>
-                  We position products around actual operational fit: boiler use, heating systems,
-                  combustion reliability, handling simplicity, and cost practicality.
-                </p>
-              </article>
-            </div>
+            <article className="message-panel">
+              <div className="message-grid">
+                <div className="message-item">
+                  <strong>Manufacturer and Supplier</strong>
+                  <p>
+                    Biomass briquettes, biomass pellets, sawdust, biomass stove, cashew cake and
+                    related support products for industrial, commercial, wholesale and retail demand.
+                  </p>
+                </div>
+                <div className="message-item">
+                  <strong>Consulting and Execution Guidance</strong>
+                  <p>
+                    Support for bio energy projects including machinery installation, fuel planning,
+                    and plant setup advisory for customers moving toward biomass-led operations.
+                  </p>
+                </div>
+                <div className="message-item">
+                  <strong>Built for Commercial Use</strong>
+                  <p>
+                    We position products around actual operational fit: boiler use, heating systems,
+                    combustion reliability, handling simplicity, and cost practicality.
+                  </p>
+                </div>
+              </div>
+            </article>
           </div>
         </section>
 
@@ -356,36 +358,38 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="process-layout">
-              <article className="content-card content-card--contrast">
-                <p className="section-kicker">Raw Materials</p>
-                <div className="chip-list">
-                  {['Sawdust', 'Wood chips', 'Rice husk', 'Groundnut shells', 'Bagasse'].map((item) => (
-                    <span key={item} className="info-chip">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </article>
+            <article className="process-panel">
+              <div className="process-layout">
+                <section className="process-block process-block--contrast">
+                  <p className="section-kicker">Raw Materials</p>
+                  <div className="chip-list">
+                    {['Sawdust', 'Wood chips', 'Rice husk', 'Groundnut shells', 'Bagasse'].map((item) => (
+                      <span key={item} className="info-chip">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </section>
 
-              <article className="content-card">
-                <p className="section-kicker">Manufacturing Process</p>
-                <ol className="number-list">
-                  {processSteps.map((step) => (
-                    <li key={step}>{step}</li>
-                  ))}
-                </ol>
-              </article>
+                <section className="process-block">
+                  <p className="section-kicker">Manufacturing Process</p>
+                  <ol className="number-list">
+                    {processSteps.map((step) => (
+                      <li key={step}>{step}</li>
+                    ))}
+                  </ol>
+                </section>
 
-              <article className="content-card">
-                <p className="section-kicker">Applications</p>
-                <ul className="product-points">
-                  {applications.map((application) => (
-                    <li key={application}>{application}</li>
-                  ))}
-                </ul>
-              </article>
-            </div>
+                <section className="process-block">
+                  <p className="section-kicker">Applications</p>
+                  <ul className="product-points">
+                    {applications.map((application) => (
+                      <li key={application}>{application}</li>
+                    ))}
+                  </ul>
+                </section>
+              </div>
+            </article>
           </div>
         </section>
 
