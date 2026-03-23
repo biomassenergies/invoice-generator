@@ -242,11 +242,113 @@ function parseInvoiceDate(value) {
   return new Date(normalizedYear, month, Number(dayString));
 }
 
+function escapeRegex(value) {
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getFinancialYearLabel(dateValue = new Date()) {
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const startYear = month >= 3 ? year : year - 1;
+  const endYear = startYear + 1;
+
+  return `${String(startYear).slice(-2)}-${String(endYear).slice(-2)}`;
+}
+
+function findCustomerCodeField(customers) {
+  const headers = Object.keys(customers[0] || {});
+  return headers.find((header) => header.toLowerCase().includes('code')) || 'CODE';
+}
+
+function findCustomerByCode(customers, customerCode) {
+  const codeField = findCustomerCodeField(customers);
+  const target = String(customerCode || '').trim().toLowerCase();
+
+  return customers.find((customer) => {
+    const values = [customer[codeField], customer.CODE, customer.Code]
+      .filter(Boolean)
+      .map((value) => String(value).trim().toLowerCase());
+
+    return values.includes(target);
+  }) || null;
+}
+
+function getNextInvoiceSequence(invoiceRows, customerCode, financialYear) {
+  const invoicePattern = new RegExp(
+    `^${escapeRegex(customerCode)}/${escapeRegex(financialYear)}-(\\d+)$`,
+    'i'
+  );
+
+  let highestSerial = 0;
+  let serialWidth = 3;
+  let latestInvoiceNumber = '';
+
+  invoiceRows.forEach((row) => {
+    const invoiceNumber = String(row['Invoice Number'] || '').trim();
+    const match = invoiceNumber.match(invoicePattern);
+
+    if (!match) {
+      return;
+    }
+
+    const serialToken = match[1];
+    const serialNumber = Number(serialToken);
+
+    if (Number.isFinite(serialNumber) && serialNumber >= highestSerial) {
+      highestSerial = serialNumber;
+      serialWidth = Math.max(serialWidth, serialToken.length);
+      latestInvoiceNumber = invoiceNumber;
+    }
+  });
+
+  return {
+    latestInvoiceNumber,
+    nextInvoiceNumber: `${customerCode}/${financialYear}-${String(highestSerial + 1).padStart(serialWidth, '0')}`
+  };
+}
+
+function getNextDespatchDocument(invoiceRows) {
+  const rowsWithDespatchDocument = invoiceRows.filter((row) =>
+    String(row['Despatch Document No.'] || '').trim()
+  );
+  const latestRow = rowsWithDespatchDocument[rowsWithDespatchDocument.length - 1];
+  const latestDespatchDocumentNo = String(latestRow?.['Despatch Document No.'] || '').trim();
+
+  if (!latestDespatchDocumentNo) {
+    return {
+      latestDespatchDocumentNo: '',
+      nextDespatchDocumentNo: '001'
+    };
+  }
+
+  const match = latestDespatchDocumentNo.match(/^(.*?)(\d+)$/);
+  if (!match) {
+    return {
+      latestDespatchDocumentNo,
+      nextDespatchDocumentNo: `${latestDespatchDocumentNo}-001`
+    };
+  }
+
+  const prefix = match[1];
+  const numericToken = match[2];
+  const nextValue = String(Number(numericToken) + 1).padStart(
+    Math.max(3, numericToken.length),
+    '0'
+  );
+
+  return {
+    latestDespatchDocumentNo,
+    nextDespatchDocumentNo: `${prefix}${nextValue}`
+  };
+}
+
 function normalizeInvoiceRow(row) {
   const invoiceDate = parseInvoiceDate(row.Dated || row.Date);
   const amount = parseNumericValue(row.Amount);
   const taxTotal = parseNumericValue(row['Tax Total']);
-  const total = parseNumericValue(row.Total) || amount + taxTotal;
+  const transportValue = parseNumericValue(row['Transport Value']);
+  const total = parseNumericValue(row.Total) || amount + taxTotal + transportValue;
   const quantity = parseNumericValue(row.QTY);
   const product = row['Description of Goods'] || '';
   const customer = row['Consignee Name'] || row.Buyer || '';
@@ -540,6 +642,51 @@ app.get('/api/invoices', async (req, res) => {
   }
 });
 
+app.get('/api/invoice-suggestions', async (req, res) => {
+  try {
+    const customerCode = String(req.query.customerCode || '').trim();
+    const customerName = String(req.query.customerName || '').trim();
+    const invoiceDate = req.query.date ? new Date(req.query.date) : new Date();
+
+    if (!customerCode && !customerName) {
+      return res.status(400).json({ error: 'customerCode or customerName is required' });
+    }
+
+    const [invoiceRows, customers] = await Promise.all([
+      DATA_MODE === 'local'
+        ? Promise.resolve(getExcelInvoices().data)
+        : getSheetData('INVOICE DETAILS').then((result) => result.data),
+      getCustomerDirectory()
+    ]);
+
+    const customer =
+      findCustomerByCode(customers, customerCode) || findCustomerByName(customers, customerName);
+    const resolvedCustomerCode = String(
+      customer?.[findCustomerCodeField(customers)] || customerCode
+    ).trim();
+
+    if (!resolvedCustomerCode) {
+      return res.status(400).json({ error: 'Unable to resolve customer code for suggestion' });
+    }
+
+    const financialYear = getFinancialYearLabel(invoiceDate);
+    const invoiceSequence = getNextInvoiceSequence(invoiceRows, resolvedCustomerCode, financialYear);
+    const despatchSequence = getNextDespatchDocument(invoiceRows);
+
+    res.json({
+      customerCode: resolvedCustomerCode,
+      financialYear,
+      latestInvoiceNumber: invoiceSequence.latestInvoiceNumber,
+      suggestedInvoiceNumber: invoiceSequence.nextInvoiceNumber,
+      latestDespatchDocumentNo: despatchSequence.latestDespatchDocumentNo,
+      suggestedDespatchDocumentNo: despatchSequence.nextDespatchDocumentNo
+    });
+  } catch (err) {
+    console.error('Error generating invoice suggestions:', err);
+    res.status(500).json({ error: 'Error generating invoice suggestions', details: err.message });
+  }
+});
+
 app.get('/api/dashboard', async (req, res) => {
   try {
     const { year, month, customer, product } = req.query;
@@ -826,7 +973,12 @@ app.get('/api/invoice/:invoiceNumber', async (req, res) => {
         return sum + rowTotal;
       }
 
-      return sum + parseNumericValue(row.Amount) + parseNumericValue(row['Tax Total']);
+      return (
+        sum +
+        parseNumericValue(row.Amount) +
+        parseNumericValue(row['Tax Total']) +
+        parseNumericValue(row['Transport Value'])
+      );
     }, 0);
 
     res.json({
@@ -866,6 +1018,7 @@ app.post('/api/create-invoice', async (req, res) => {
       customerState,
       items,
       transport,
+      transportValue,
       vehicle,
       destination
     } = req.body;
@@ -906,8 +1059,9 @@ app.post('/api/create-invoice', async (req, res) => {
     const month = (invoiceDate.getMonth() + 1).toString();
     const year = invoiceDate.getFullYear().toString();
     const normalizedState = String(customerState || '').trim().toUpperCase();
+    const normalizedTransportValue = parseNumericValue(transportValue);
 
-    for (const item of items) {
+    for (const [index, item] of items.entries()) {
       const qty = Number(item.qty || 0);
       const rate = Number(item.rate || 0);
       const amount = qty * rate;
@@ -930,7 +1084,8 @@ app.post('/api/create-invoice', async (req, res) => {
       }
 
       const taxTotal = sgstAmt + cgstAmt + igstAmt;
-      const total = amount + taxTotal;
+      const rowTransportValue = index === 0 ? normalizedTransportValue : 0;
+      const total = amount + taxTotal + rowTransportValue;
 
       const rowData = {
         'Invoice Number': invoiceNumber,
@@ -960,6 +1115,7 @@ app.post('/api/create-invoice', async (req, res) => {
         'CGST AMT': cgstAmt,
         IGST_2: igstAmt,
         'Tax Total': taxTotal,
+        'Transport Value': rowTransportValue,
         Total: total,
         Transport: transport || '',
         'Motor Vehicle Number': vehicle || '',
@@ -1036,7 +1192,8 @@ app.get('/api/invoice/:invoiceNumber/pdf', async (req, res) => {
         despatchThrough: firstRow['Despatch through'] || firstRow.Transport || '',
         destination: firstRow.Destination || '',
         billOfLading: firstRow['Bill of Landing/LR-RR No.'] || '',
-        vehicleNumber: firstRow['Motor Vehicle Number'] || ''
+        vehicleNumber: firstRow['Motor Vehicle Number'] || '',
+        transportValue: parseNumericValue(firstRow['Transport Value'])
       },
       transportDetails: {
         transport: firstRow.Transport,

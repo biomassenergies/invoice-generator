@@ -104,6 +104,13 @@
   cursor: not-allowed;
 }
 
+.field-hint {
+  margin: 8px 2px 0;
+  font-size: 0.82rem;
+  color: #667085;
+  line-height: 1.4;
+}
+
 /* Customer details badge */
 .customer-details {
   margin-top: 14px;

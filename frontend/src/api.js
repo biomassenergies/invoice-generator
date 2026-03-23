@@ -32,6 +32,7 @@ export const createCustomer = (data) => API.post('/customers', data);
 export const getProducts = () => API.get('/products');
 export const listInvoices = () => API.get('/invoices');
 export const getDashboard = (params) => API.get('/dashboard', { params });
+export const getInvoiceSuggestions = (params) => API.get('/invoice-suggestions', { params });
 
 // Invoice operations
 export const createInvoice = (data) => API.post('/create-invoice', data);

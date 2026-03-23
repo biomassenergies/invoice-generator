@@ -3,7 +3,8 @@ import {
   getCustomers,
   getProducts,
   createInvoice,
-  downloadInvoicePDF
+  downloadInvoicePDF,
+  getInvoiceSuggestions
 } from './api';
 import './Invoice.css';
 
@@ -17,6 +18,8 @@ function Invoice() {
   const [customerHeaders, setCustomerHeaders] = useState([]);
   const [productHeaders, setProductHeaders] = useState([]);
   const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [suggestions, setSuggestions] = useState(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerState, setCustomerState] = useState('');
   const [buyer, setBuyer] = useState('');
@@ -30,6 +33,7 @@ function Invoice() {
   const [deliveryNoteDate, setDeliveryNoteDate] = useState('');
   const [billOfLading, setBillOfLading] = useState('');
   const [transport, setTransport] = useState('');
+  const [transportValue, setTransportValue] = useState(0);
   const [vehicle, setVehicle] = useState('');
   const [destination, setDestination] = useState('');
   const [items, setItems] = useState([{ product: '', hsn: '', qty: 1, rate: 0, per: 'unit' }]);
@@ -38,6 +42,7 @@ function Invoice() {
     sgst: 0,
     cgst: 0,
     igst: 0,
+    transportValue: 0,
     grand: 0
   });
 
@@ -50,6 +55,9 @@ function Invoice() {
 
   const getCustomerStateField = () =>
     customerHeaders.find((header) => header.toLowerCase().includes('state')) || 'State';
+
+  const getCustomerCodeField = () =>
+    customerHeaders.find((header) => header.toLowerCase().includes('code')) || 'CODE';
 
   const loadData = async () => {
     try {
@@ -66,12 +74,17 @@ function Invoice() {
     }
   };
 
-  const calculateTotals = (itemsList, stateValue = customerState) => {
+  const calculateTotals = (
+    itemsList,
+    stateValue = customerState,
+    transportCostValue = transportValue
+  ) => {
     let taxable = 0;
     let sgst = 0;
     let cgst = 0;
     let igst = 0;
     const normalizedState = String(stateValue || '').trim().toUpperCase();
+    const normalizedTransportValue = Number(transportCostValue || 0);
 
     itemsList.forEach((item) => {
       const amount = item.qty * item.rate;
@@ -90,11 +103,47 @@ function Invoice() {
       sgst,
       cgst,
       igst,
-      grand: taxable + sgst + cgst + igst
+      transportValue: normalizedTransportValue,
+      grand: taxable + sgst + cgst + igst + normalizedTransportValue
     });
   };
 
-  const handleCustomerChange = (e) => {
+  const loadSuggestions = async (customer) => {
+    if (!customer) {
+      setSuggestions(null);
+      return;
+    }
+
+    const codeField = getCustomerCodeField();
+    const nameField = getCustomerNameField();
+    const customerCode = customer[codeField] || customer.CODE || '';
+    const customerName = customer[nameField] || customer['Customer Name'] || '';
+
+    if (!customerCode && !customerName) {
+      setSuggestions(null);
+      return;
+    }
+
+    try {
+      setSuggestionsLoading(true);
+      const response = await getInvoiceSuggestions({
+        customerCode,
+        customerName,
+        date: today
+      });
+      const nextSuggestions = response.data;
+      setSuggestions(nextSuggestions);
+      setInvoiceNumber(nextSuggestions.suggestedInvoiceNumber || '');
+      setDespatchDocumentNo(nextSuggestions.suggestedDespatchDocumentNo || '');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to load invoice suggestions');
+      setSuggestions(null);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const handleCustomerChange = async (e) => {
     const customerName = e.target.value;
     const nameField = getCustomerNameField();
     const customer = customers.find(
@@ -107,7 +156,8 @@ function Invoice() {
       const state = stateField ? customer[stateField] : customer.State || '';
       setCustomerState(state);
       setBuyer(customerName);
-      calculateTotals(items, state);
+      calculateTotals(items, state, transportValue);
+      await loadSuggestions(customer);
     }
   };
 
@@ -132,19 +182,19 @@ function Invoice() {
     }
 
     setItems(updated);
-    calculateTotals(updated);
+    calculateTotals(updated, customerState, transportValue);
   };
 
   const handleAddItem = () => {
     const updated = [...items, { product: '', hsn: '', qty: 1, rate: 0, per: 'unit' }];
     setItems(updated);
-    calculateTotals(updated);
+    calculateTotals(updated, customerState, transportValue);
   };
 
   const handleRemoveItem = (index) => {
     const updated = items.filter((_, itemIndex) => itemIndex !== index);
     setItems(updated);
-    calculateTotals(updated);
+    calculateTotals(updated, customerState, transportValue);
   };
 
   const downloadPDF = async (invNumber) => {
@@ -211,6 +261,7 @@ function Invoice() {
           per: item.per || 'unit'
         })),
         transport,
+        transportValue: Number(transportValue || 0),
         vehicle,
         destination
       };
@@ -233,9 +284,11 @@ function Invoice() {
       setBillOfLading('');
       setItems([{ product: '', hsn: '', qty: 1, rate: 0, per: 'unit' }]);
       setTransport('');
+      setTransportValue(0);
       setVehicle('');
       setDestination('');
-      setTotals({ taxable: 0, sgst: 0, cgst: 0, igst: 0, grand: 0 });
+      setSuggestions(null);
+      setTotals({ taxable: 0, sgst: 0, cgst: 0, igst: 0, transportValue: 0, grand: 0 });
 
       setTimeout(() => {
         downloadPDF(invoiceNumber);
@@ -281,9 +334,17 @@ function Invoice() {
                   type="text"
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
-                  placeholder="e.g., MAE/001"
+                  placeholder="Suggested from customer code and current FY"
                   required
                 />
+                {suggestions && (
+                  <p className="field-hint">
+                    Suggested: <strong>{suggestions.suggestedInvoiceNumber}</strong>
+                    {suggestions.latestInvoiceNumber
+                      ? ` | Last used: ${suggestions.latestInvoiceNumber}`
+                      : ' | First invoice for this customer in current FY'}
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label>Date</label>
@@ -379,8 +440,16 @@ function Invoice() {
                   type="text"
                   value={despatchDocumentNo}
                   onChange={(e) => setDespatchDocumentNo(e.target.value)}
-                  placeholder="Do not reuse invoice number"
+                  placeholder="Suggested unique despatch document number"
                 />
+                {suggestions && (
+                  <p className="field-hint">
+                    Suggested: <strong>{suggestions.suggestedDespatchDocumentNo}</strong>
+                    {suggestions.latestDespatchDocumentNo
+                      ? ` | Last used: ${suggestions.latestDespatchDocumentNo}`
+                      : ' | Starting a new despatch series'}
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label>Bill of Landing/LR-RR No.</label>
@@ -419,6 +488,7 @@ function Invoice() {
                   <strong>State: </strong>
                   <span className="state-badge">{customerState}</span>
                 </p>
+                {suggestionsLoading && <p className="field-hint">Loading numbering suggestions...</p>}
                 <p style={{ fontSize: '0.9em', color: '#666' }}>
                   GST Type:{' '}
                   {String(customerState || '').trim().toUpperCase() === 'MAHARASHTRA'
@@ -546,6 +616,21 @@ function Invoice() {
                   placeholder="e.g., Nagpur"
                 />
               </div>
+              <div className="form-group">
+                <label>Transport Cost</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={transportValue}
+                  onChange={(e) => {
+                    const nextValue = Number(e.target.value || 0);
+                    setTransportValue(nextValue);
+                    calculateTotals(items, customerState, nextValue);
+                  }}
+                  placeholder="Optional transport charge"
+                />
+              </div>
             </div>
           </section>
 
@@ -567,6 +652,10 @@ function Invoice() {
               <div className="total-item">
                 <span>IGST (5%):</span>
                 <strong>Rs {totals.igst.toFixed(2)}</strong>
+              </div>
+              <div className="total-item">
+                <span>Transport Cost:</span>
+                <strong>Rs {totals.transportValue.toFixed(2)}</strong>
               </div>
               <div className="total-item grand-total">
                 <span>Grand Total:</span>

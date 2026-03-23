@@ -86,6 +86,7 @@ module.exports = (invoiceData) => {
   let totalCGST = 0;
   let totalIGST = 0;
   let totalTaxable = 0;
+  const transportValue = Number(invoiceMeta.transportValue || 0);
 
   const itemRows = items.map((item, index) => {
     const amount = Number(item.amount || 0);
@@ -118,7 +119,7 @@ module.exports = (invoiceData) => {
     `;
   }).join('');
 
-  const totalAmount = totalTaxable + totalSGST + totalCGST + totalIGST;
+  const totalAmount = totalTaxable + totalSGST + totalCGST + totalIGST + transportValue;
   const totalTaxAmount = totalSGST + totalCGST + totalIGST;
 
   return `
@@ -437,6 +438,12 @@ module.exports = (invoiceData) => {
         </table>
 
         <div class="payable-summary">
+          ${transportValue > 0 ? `
+          <div class="payable-row">
+            <span class="label">Transport Charges</span>
+            <strong>${formatCurrency(transportValue)}</strong>
+          </div>
+          ` : ''}
           <div class="payable-row">
             <span class="label">Total Payable Amount</span>
             <strong>${formatCurrency(totalAmount)}</strong>
