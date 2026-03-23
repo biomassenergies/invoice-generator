@@ -422,20 +422,16 @@ module.exports = (invoiceData) => {
           </tbody>
         </table>
 
-        <div class="words">
-          <div><span class="label">Tax Amount (in words)</span></div>
-          <div>${amountInWords(totalTaxAmount)}</div>
-        </div>
-
         <div class="payable-summary">
-          <div class="payable-row">
-            <span class="label">Total Tax Amount</span>
-            <strong>${formatCurrency(totalTaxAmount)}</strong>
-          </div>
           <div class="payable-row">
             <span class="label">Total Payable Amount</span>
             <strong>${formatCurrency(totalAmount)}</strong>
           </div>
+        </div>
+
+        <div class="words">
+          <div><span class="label">Total Payable Amount (in words)</span></div>
+          <div>${amountInWords(totalAmount)}</div>
         </div>
 
         <div class="bottom">
