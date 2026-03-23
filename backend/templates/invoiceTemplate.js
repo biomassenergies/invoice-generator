@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 module.exports = (invoiceData) => {
   const firm = {
     name: 'MAHALAXMI AGRO ENERGIES',
@@ -25,6 +28,10 @@ module.exports = (invoiceData) => {
   } = invoiceData;
 
   const isMaharashtra = String(customerState || '').trim().toUpperCase() === 'MAHARASHTRA';
+  const sealPath = path.join(__dirname, '../../frontend/public/mae-seal.png');
+  const sealDataUri = fs.existsSync(sealPath)
+    ? `data:image/png;base64,${fs.readFileSync(sealPath).toString('base64')}`
+    : '';
 
   const pan = firm.gstn.slice(2, 12);
   const formatText = (value) => (value ? String(value) : '');
@@ -240,8 +247,15 @@ module.exports = (invoiceData) => {
         }
         .signature {
           text-align: center;
-          padding-top: 40px;
+          padding-top: 12px;
           font-weight: 700;
+        }
+        .seal {
+          display: block;
+          width: 90px;
+          height: 90px;
+          object-fit: contain;
+          margin: 0 auto 8px;
         }
         .footer-note {
           text-align: center;
@@ -448,6 +462,7 @@ module.exports = (invoiceData) => {
             <div><span class="label">Branch & IFSC</span> ${firm.branchIfsc}</div>
           </div>
           <div class="bottom-cell signature">
+            ${sealDataUri ? `<img src="${sealDataUri}" alt="Company Seal" class="seal" />` : ''}
             <div>For ${firm.name}</div>
             <div style="margin-top:30px;">Authorised Signatory</div>
           </div>
