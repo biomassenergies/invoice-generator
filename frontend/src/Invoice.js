@@ -8,6 +8,7 @@ import {
 import './Invoice.css';
 
 function Invoice() {
+  const today = new Date().toISOString().split('T')[0];
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -18,10 +19,20 @@ function Invoice() {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerState, setCustomerState] = useState('');
+  const [buyer, setBuyer] = useState('');
+  const [deliveryNote, setDeliveryNote] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState('');
+  const [supplierRef, setSupplierRef] = useState('');
+  const [otherReference, setOtherReference] = useState('');
+  const [buyerOrderNo, setBuyerOrderNo] = useState('');
+  const [buyerOrderDate, setBuyerOrderDate] = useState('');
+  const [despatchDocumentNo, setDespatchDocumentNo] = useState('');
+  const [deliveryNoteDate, setDeliveryNoteDate] = useState('');
+  const [billOfLading, setBillOfLading] = useState('');
   const [transport, setTransport] = useState('');
   const [vehicle, setVehicle] = useState('');
   const [destination, setDestination] = useState('');
-  const [items, setItems] = useState([{ product: '', hsn: '', qty: 1, rate: 0 }]);
+  const [items, setItems] = useState([{ product: '', hsn: '', qty: 1, rate: 0, per: 'unit' }]);
   const [totals, setTotals] = useState({
     taxable: 0,
     sgst: 0,
@@ -60,12 +71,13 @@ function Invoice() {
     let sgst = 0;
     let cgst = 0;
     let igst = 0;
+    const normalizedState = String(stateValue || '').trim().toUpperCase();
 
     itemsList.forEach((item) => {
       const amount = item.qty * item.rate;
       taxable += amount;
 
-      if (stateValue === 'Maharashtra') {
+      if (normalizedState === 'MAHARASHTRA') {
         sgst += amount * 0.025;
         cgst += amount * 0.025;
       } else {
@@ -94,6 +106,7 @@ function Invoice() {
       const stateField = getCustomerStateField();
       const state = stateField ? customer[stateField] : customer.State || '';
       setCustomerState(state);
+      setBuyer(customerName);
       calculateTotals(items, state);
     }
   };
@@ -123,7 +136,7 @@ function Invoice() {
   };
 
   const handleAddItem = () => {
-    const updated = [...items, { product: '', hsn: '', qty: 1, rate: 0 }];
+    const updated = [...items, { product: '', hsn: '', qty: 1, rate: 0, per: 'unit' }];
     setItems(updated);
     calculateTotals(updated);
   };
@@ -178,15 +191,24 @@ function Invoice() {
       const payload = {
         invoiceNumber,
         consigneeName,
-        buyer: consigneeName,
-        date: new Date().toISOString().split('T')[0],
+        buyer: buyer || consigneeName,
+        date: today,
+        deliveryNote,
+        paymentTerms,
+        supplierRef,
+        otherReference,
+        buyerOrderNo,
+        buyerOrderDate,
+        despatchDocumentNo,
+        deliveryNoteDate,
+        billOfLading,
         customerState,
         items: items.map((item) => ({
           product: item.product,
           hsn: item.hsn || '',
           qty: item.qty,
           rate: item.rate,
-          per: 'unit'
+          per: item.per || 'unit'
         })),
         transport,
         vehicle,
@@ -199,7 +221,17 @@ function Invoice() {
       setInvoiceNumber('');
       setSelectedCustomer(null);
       setCustomerState('');
-      setItems([{ product: '', hsn: '', qty: 1, rate: 0 }]);
+      setBuyer('');
+      setDeliveryNote('');
+      setPaymentTerms('');
+      setSupplierRef('');
+      setOtherReference('');
+      setBuyerOrderNo('');
+      setBuyerOrderDate('');
+      setDespatchDocumentNo('');
+      setDeliveryNoteDate('');
+      setBillOfLading('');
+      setItems([{ product: '', hsn: '', qty: 1, rate: 0, per: 'unit' }]);
       setTransport('');
       setVehicle('');
       setDestination('');
@@ -257,8 +289,106 @@ function Invoice() {
                 <label>Date</label>
                 <input
                   type="date"
-                  defaultValue={new Date().toISOString().split('T')[0]}
+                  defaultValue={today}
                   disabled
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Buyer</label>
+                <input
+                  type="text"
+                  value={buyer}
+                  onChange={(e) => setBuyer(e.target.value)}
+                  placeholder="Buyer name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Delivery Note</label>
+                <input
+                  type="text"
+                  value={deliveryNote}
+                  onChange={(e) => setDeliveryNote(e.target.value)}
+                  placeholder="Delivery note"
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Payment Mode/Terms</label>
+                <input
+                  type="text"
+                  value={paymentTerms}
+                  onChange={(e) => setPaymentTerms(e.target.value)}
+                  placeholder="Payment terms"
+                />
+              </div>
+              <div className="form-group">
+                <label>Supplier Ref.</label>
+                <input
+                  type="text"
+                  value={supplierRef}
+                  onChange={(e) => setSupplierRef(e.target.value)}
+                  placeholder="Supplier reference"
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Other Reference(s)</label>
+                <input
+                  type="text"
+                  value={otherReference}
+                  onChange={(e) => setOtherReference(e.target.value)}
+                  placeholder="Other references"
+                />
+              </div>
+              <div className="form-group">
+                <label>Buyer's Order No.</label>
+                <input
+                  type="text"
+                  value={buyerOrderNo}
+                  onChange={(e) => setBuyerOrderNo(e.target.value)}
+                  placeholder="Buyer order number"
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Buyer Order Date</label>
+                <input
+                  type="date"
+                  value={buyerOrderDate}
+                  onChange={(e) => setBuyerOrderDate(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>Delivery Note Date</label>
+                <input
+                  type="date"
+                  value={deliveryNoteDate}
+                  onChange={(e) => setDeliveryNoteDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Despatch Document No.</label>
+                <input
+                  type="text"
+                  value={despatchDocumentNo}
+                  onChange={(e) => setDespatchDocumentNo(e.target.value)}
+                  placeholder="Do not reuse invoice number"
+                />
+              </div>
+              <div className="form-group">
+                <label>Bill of Landing/LR-RR No.</label>
+                <input
+                  type="text"
+                  value={billOfLading}
+                  onChange={(e) => setBillOfLading(e.target.value)}
+                  placeholder="Bill or LR-RR number"
                 />
               </div>
             </div>
@@ -290,7 +420,10 @@ function Invoice() {
                   <span className="state-badge">{customerState}</span>
                 </p>
                 <p style={{ fontSize: '0.9em', color: '#666' }}>
-                  GST Type: {customerState === 'Maharashtra' ? 'CGST + SGST' : 'IGST'}
+                  GST Type:{' '}
+                  {String(customerState || '').trim().toUpperCase() === 'MAHARASHTRA'
+                    ? 'CGST + SGST'
+                    : 'IGST'}
                 </p>
               </div>
             )}
@@ -306,6 +439,7 @@ function Invoice() {
                     <th>HSN Code</th>
                     <th>Quantity</th>
                     <th>Rate (Rs)</th>
+                    <th>Per</th>
                     <th>Amount (Rs)</th>
                     <th>Action</th>
                   </tr>
@@ -355,6 +489,13 @@ function Invoice() {
                           onChange={(e) => handleItemChange(index, 'rate', e.target.value)}
                         />
                       </td>
+                      <td>
+                        <input
+                          type="text"
+                          value={item.per}
+                          onChange={(e) => handleItemChange(index, 'per', e.target.value)}
+                        />
+                      </td>
                       <td className="amount">Rs {(item.qty * item.rate).toFixed(2)}</td>
                       <td>
                         <button
@@ -379,7 +520,7 @@ function Invoice() {
             <h2>Transport Details (Optional)</h2>
             <div className="form-row">
               <div className="form-group">
-                <label>Transport Mode</label>
+                <label>Despatch through</label>
                 <input
                   type="text"
                   value={transport}
@@ -415,23 +556,18 @@ function Invoice() {
                 <span>Taxable Value:</span>
                 <strong>Rs {totals.taxable.toFixed(2)}</strong>
               </div>
-              {customerState === 'Maharashtra' ? (
-                <>
-                  <div className="total-item">
-                    <span>SGST (2.5%):</span>
-                    <strong>Rs {totals.sgst.toFixed(2)}</strong>
-                  </div>
-                  <div className="total-item">
-                    <span>CGST (2.5%):</span>
-                    <strong>Rs {totals.cgst.toFixed(2)}</strong>
-                  </div>
-                </>
-              ) : (
-                <div className="total-item">
-                  <span>IGST (5%):</span>
-                  <strong>Rs {totals.igst.toFixed(2)}</strong>
-                </div>
-              )}
+              <div className="total-item">
+                <span>SGST (2.5%):</span>
+                <strong>Rs {totals.sgst.toFixed(2)}</strong>
+              </div>
+              <div className="total-item">
+                <span>CGST (2.5%):</span>
+                <strong>Rs {totals.cgst.toFixed(2)}</strong>
+              </div>
+              <div className="total-item">
+                <span>IGST (5%):</span>
+                <strong>Rs {totals.igst.toFixed(2)}</strong>
+              </div>
               <div className="total-item grand-total">
                 <span>Grand Total:</span>
                 <strong>Rs {totals.grand.toFixed(2)}</strong>

@@ -854,6 +854,15 @@ app.post('/api/create-invoice', async (req, res) => {
       consigneeName,
       buyer,
       date,
+      deliveryNote,
+      paymentTerms,
+      supplierRef,
+      otherReference,
+      buyerOrderNo,
+      buyerOrderDate,
+      despatchDocumentNo,
+      deliveryNoteDate,
+      billOfLading,
       customerState,
       items,
       transport,
@@ -876,9 +885,27 @@ app.post('/api/create-invoice', async (req, res) => {
       return res.status(400).json({ error: 'Invoice number already exists!' });
     }
 
+    const normalizedDespatchDocumentNo = String(despatchDocumentNo || '').trim();
+    if (normalizedDespatchDocumentNo) {
+      const invoiceRows =
+        DATA_MODE === 'local'
+          ? getExcelInvoices().data
+          : (await getSheetData('INVOICE DETAILS')).data;
+
+      const duplicateDespatchDocument = invoiceRows.some(
+        (row) =>
+          String(row['Despatch Document No.'] || '').trim() === normalizedDespatchDocumentNo
+      );
+
+      if (duplicateDespatchDocument) {
+        return res.status(400).json({ error: 'Despatch document number already exists!' });
+      }
+    }
+
     const invoiceDate = new Date(date);
     const month = (invoiceDate.getMonth() + 1).toString();
     const year = invoiceDate.getFullYear().toString();
+    const normalizedState = String(customerState || '').trim().toUpperCase();
 
     for (const item of items) {
       const qty = Number(item.qty || 0);
@@ -892,7 +919,7 @@ app.post('/api/create-invoice', async (req, res) => {
       let cgstAmt = 0;
       let igstAmt = 0;
 
-      if (customerState === 'Maharashtra') {
+      if (normalizedState === 'MAHARASHTRA') {
         sgstRate = 2.5;
         cgstRate = 2.5;
         sgstAmt = amount * 0.025;
@@ -910,6 +937,16 @@ app.post('/api/create-invoice', async (req, res) => {
         'Consignee Name': consigneeName,
         Buyer: buyer || consigneeName,
         Dated: date,
+        'Delivery Note': deliveryNote || '',
+        'Payment Mode/Terms': paymentTerms || '',
+        'Supplier Ref.': supplierRef || '',
+        'Other Reference(s)': otherReference || '',
+        "Buyer's Order No.": buyerOrderNo || '',
+        Date: buyerOrderDate || '',
+        'Despatch Document No.': normalizedDespatchDocumentNo,
+        'Delivery Note Date': deliveryNoteDate || '',
+        'Despatch through': transport || '',
+        'Bill of Landing/LR-RR No.': billOfLading || '',
         'Description of Goods': item.product || '',
         'HSN Code': item.hsn || '',
         QTY: qty,
@@ -994,7 +1031,7 @@ app.get('/api/invoice/:invoiceNumber/pdf', async (req, res) => {
         otherReference: firstRow['Other Reference(s)'] || '',
         buyerOrderNo: firstRow["Buyer's Order No."] || '',
         buyerOrderDate: firstRow.Date || firstRow.Dated || '',
-        despatchDocumentNo: firstRow['Despatch Document No.'] || invoiceNumber,
+        despatchDocumentNo: firstRow['Despatch Document No.'] || '',
         deliveryNoteDate: firstRow['Delivery Note Date'] || firstRow.Dated || '',
         despatchThrough: firstRow['Despatch through'] || firstRow.Transport || '',
         destination: firstRow.Destination || '',
