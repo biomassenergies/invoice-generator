@@ -537,17 +537,38 @@
   font-size: 1.1rem;
 }
 
-.advantage-grid {
+.benefit-panel {
+  padding: 22px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(122, 137, 171, 0.14);
+  box-shadow: 0 18px 42px rgba(32, 42, 77, 0.08);
+}
+
+.benefit-panel--accent {
+  background: linear-gradient(180deg, rgba(244, 248, 255, 0.95), rgba(255, 255, 255, 0.88));
+}
+
+.benefit-block + .benefit-block {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e3e7f0;
+}
+
+.benefit-block strong {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  color: #243252;
+}
+
+.benefit-block ul {
+  margin: 0;
+  padding-left: 18px;
   display: grid;
-  gap: 14px;
-}
-
-.advantage-grid--stacked {
-  grid-template-columns: 1fr;
-}
-
-.advantage-card--accent {
-  background: linear-gradient(180deg, rgba(244, 248, 255, 0.95), rgba(255, 255, 255, 0.86));
+  gap: 9px;
+  color: #4f596f;
+  line-height: 1.65;
 }
 
 .services-panel {

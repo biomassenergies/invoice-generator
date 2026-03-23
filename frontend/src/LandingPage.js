@@ -440,34 +440,34 @@ function LandingPage() {
             <div className="benefit-layout">
               <div className="benefit-column">
                 <h3>Key Benefits</h3>
-                <div className="advantage-grid advantage-grid--stacked">
+                <article className="benefit-panel">
                   {keyBenefits.map((benefit) => (
-                    <article key={benefit.title} className="advantage-card">
+                    <section key={benefit.title} className="benefit-block">
                       <strong>{benefit.title}</strong>
                       <ul>
                         {benefit.points.map((point) => (
                           <li key={point}>{point}</li>
                         ))}
                       </ul>
-                    </article>
+                    </section>
                   ))}
-                </div>
+                </article>
               </div>
 
               <div className="benefit-column">
                 <h3>Technical Advantages</h3>
-                <div className="advantage-grid advantage-grid--stacked">
+                <article className="benefit-panel benefit-panel--accent">
                   {technicalAdvantages.map((advantage) => (
-                    <article key={advantage.title} className="advantage-card advantage-card--accent">
+                    <section key={advantage.title} className="benefit-block">
                       <strong>{advantage.title}</strong>
                       <ul>
                         {advantage.points.map((point) => (
                           <li key={point}>{point}</li>
                         ))}
                       </ul>
-                    </article>
+                    </section>
                   ))}
-                </div>
+                </article>
               </div>
             </div>
           </div>
