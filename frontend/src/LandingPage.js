@@ -1,305 +1,550 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import firmDetails from './firmDetails';
 import './LandingPage.css';
 
-const rawMaterials = ['Sawdust', 'Wood chips', 'Rice husk', 'Groundnut shells', 'Bagasse'];
-
-const manufacturingSteps = [
-  'Drying (Moisture < 15%)',
-  'Grinding',
-  'High-pressure compression'
+const productFamilies = [
+  {
+    title: 'Fuel Products',
+    description: 'Cleaner solid fuels engineered for industrial boilers, process heating, and commercial energy use.',
+    items: [
+      {
+        title: 'Biomass Pellets',
+        image:
+          'https://5.imimg.com/data5/SELLER/Default/2023/3/IP/JJ/HF/56292250/6mm-saw-dust-pellets-250x250.jpg',
+        points: ['6-8 mm precision size', 'Good for automated systems', 'Consistent combustion and handling']
+      },
+      {
+        title: 'Biomass Briquettes',
+        image:
+          'https://5.imimg.com/data5/SELLER/Default/2024/2/391098779/TV/ZD/CZ/56292250/white-coal-biomass-briquette-250x250.jpeg',
+        points: ['90 mm circular format', 'Longer burn duration', 'Reliable coal alternative for industry']
+      },
+      {
+        title: 'Biomass Rice Husk',
+        image:
+          'https://5.imimg.com/data5/SELLER/Default/2023/6/314440534/IE/TD/YN/56292250/rice-husk-250x250.jpg',
+        points: ['Agro-based energy input', 'Useful in biomass fuel processing', 'Suitable for blended applications']
+      },
+      {
+        title: 'Wood Charcoal',
+        points: ['High-heat performance', 'Used in foundry, metallurgy, tandoor and BBQ applications']
+      }
+    ]
+  },
+  {
+    title: 'Raw Material and Additives',
+    description: 'Feedstock and binding support for dependable biomass production and calorific performance.',
+    items: [
+      {
+        title: 'DOC (De-Oiled Cakes)',
+        image:
+          'https://5.imimg.com/data5/SELLER/Default/2023/3/ZD/EU/UI/56292250/cashew-de-oiled-cake-250x250.jpg',
+        points: ['Natural binder', 'Calorific booster', 'Helpful for lower-lignin raw materials']
+      },
+      {
+        title: 'Sawdust',
+        points: ['Direct from sawmills', 'Available in pure and mixed wood grades']
+      },
+      {
+        title: 'Raw Material Base',
+        points: ['Sawdust', 'Wood chips', 'Groundnut shells', 'Bagasse', 'Rice husk']
+      }
+    ]
+  },
+  {
+    title: 'Equipment and Logistics Support',
+    description: 'Operational products and execution support beyond fuel supply.',
+    items: [
+      {
+        title: 'Biomass Pellet Stove',
+        image: `${process.env.PUBLIC_URL}/15KG-Stove.png`,
+        points: ['Commercial stove burner', 'Available in 1 kg, 5 kg, 10 kg, 15 kg and 20 kg variants']
+      },
+      {
+        title: 'Packing Pallets',
+        image:
+          'https://5.imimg.com/data5/SELLER/Default/2021/12/QC/JJ/BM/6555452/wooden-packing-pallet-1000x1000.jpg',
+        points: ['Reusable logistics support', 'Cost-effective loading and movement solution']
+      },
+      {
+        title: 'Project Consulting',
+        points: ['Bio energy project planning', 'Machinery installation guidance', 'Plant setup support']
+      }
+    ]
+  }
 ];
 
-const products = [
+const productCategories = [
+  { title: 'Pellets', description: 'Best for more controlled feeding and automated combustion systems.' },
+  { title: 'Briquettes', description: 'Best for industrial heat demand where durable, dense solid fuel is preferred.' },
+  { title: 'Feedstock and DOC', description: 'Improves production flexibility and supports better fuel blending outcomes.' },
+  { title: 'Equipment and Logistics', description: 'Stoves, pallets, and handling support that complete the operating cycle.' }
+];
+
+const keyBenefits = [
   {
-    title: 'Biomass Briquette',
-    image: 'https://5.imimg.com/data5/SELLER/Default/2024/2/391098779/TV/ZD/CZ/56292250/white-coal-biomass-briquette-250x250.jpeg',
-    points: [
-      'High-density eco-friendly fuel',
-      'Made from organic waste such as sawdust, groundnut shells, and agro residues',
-      'Standard size: 90 MM circular',
-      'Alternative to coal for industrial use'
-    ],
-    subheading: 'Benefits',
-    details: ['Carbon-neutral', 'Low ash content', 'Stable pricing']
+    title: 'Cleaner Energy Transition',
+    points: ['Renewable fuel pathway', 'Lower emissions than many conventional solid fuels', 'Better fit for sustainability-focused operations']
   },
   {
-    title: 'Biomass Pellet',
-    image: 'https://5.imimg.com/data5/SELLER/Default/2023/3/IP/JJ/HF/56292250/6mm-saw-dust-pellets-250x250.jpg',
-    points: [
-      'Cylindrical biofuel',
-      'Size: 6-8 mm',
-      'Ideal for automated systems'
-    ],
-    subheading: 'Applications',
-    details: ['Industrial boilers', 'Residential stoves', 'Commercial heating systems']
+    title: 'Operational Reliability',
+    points: ['Steady supply orientation', 'Practical for boilers and process heating', 'Consistent product handling']
   },
   {
-    title: 'DOC (De-Oiled Cakes)',
-    image: 'https://5.imimg.com/data5/SELLER/Default/2023/3/ZD/EU/UI/56292250/cashew-de-oiled-cake-250x250.jpg',
-    points: ['Examples: Sal Seed, Cashew'],
-    subheading: 'Functions',
-    details: ['Natural binder', 'Calorific booster', 'Ideal for low-lignin materials like rice husk and straw']
-  },
-  {
-    title: 'Sawdust',
-    points: ['Directly sourced from sawmills'],
-    subheading: 'Types',
-    details: ['Pure wood sawdust', 'Mixed wood sawdust']
-  },
-  {
-    title: 'Wood Charcoal',
-    points: ['Reliable solid fuel option for high-heat applications'],
-    subheading: 'Applications',
-    details: ['Metallurgy', 'Foundry work', 'Tandoors and BBQ']
-  },
-  {
-    title: 'Biomass Rice Husk',
-    image: 'https://5.imimg.com/data5/SELLER/Default/2023/6/314440534/IE/TD/YN/56292250/rice-husk-250x250.jpg',
-    points: ['Byproduct of rice milling', 'Outer shell of paddy grain'],
-    subheading: 'Use',
-    details: ['Suitable for biomass fuel processing and energy applications']
-  },
-  {
-    title: 'Packing Pallets',
-    points: ['Used in logistics', 'Cost-effective and reusable'],
-    subheading: 'Support',
-    details: ['Helps streamline handling, storage, and movement']
-  },
-  {
-    title: 'Biomass Pellet Stove',
-    points: ['Commercial stove burner'],
-    subheading: 'Variants',
-    details: ['1 KG', '5 KG', '10 KG', '15 KG', '20 KG']
+    title: 'Commercial Practicality',
+    points: ['Stable pricing logic', 'Easy storage and transport', 'Suitable for industrial and commercial buying cycles']
   }
+];
+
+const technicalAdvantages = [
+  {
+    title: 'Pellets',
+    points: ['High density', 'High energy output', 'Moisture generally below 10%', 'Better suited to automated feeding']
+  },
+  {
+    title: 'Briquettes',
+    points: ['Longer burn duration', 'Strong use-case in industry', 'Moisture typically around 15-20%', 'Less production-intensive format']
+  },
+  {
+    title: 'Material Quality',
+    points: ['Natural lignin can act as a binder', 'No additive-heavy process required', 'Feedstocks selected from proven biomass sources']
+  }
+];
+
+const applications = [
+  'Industrial boilers',
+  'Commercial heating systems',
+  'Residential and commercial stove use',
+  'Boiler fuel substitution projects',
+  'Bio energy plant setup and machinery planning'
+];
+
+const processSteps = [
+  'Drying raw material to controlled moisture levels',
+  'Grinding for size consistency',
+  'High-pressure compression for dense fuel formation'
+];
+
+const companyStats = [
+  { label: 'Founded', value: '2020' },
+  { label: 'Base', value: 'Nagpur' },
+  { label: 'Focus', value: 'Biofuels + Projects' },
+  { label: 'Support', value: 'Products + Consulting' }
 ];
 
 const comparisonRows = [
-  ['Size', '6-8 mm', '90 mm'],
-  ['Application', 'Small-scale & automated', 'Industrial'],
-  ['Density', 'High', 'Moderate'],
-  ['Combustion', 'High energy', 'Long duration'],
-  ['Moisture', '<10%', '15-20%'],
-  ['Production', 'High precision', 'Less intensive']
-];
-
-const advantages = [
-  {
-    title: 'Environmental Impact',
-    points: ['Renewable', 'Pollution-free', 'Lower greenhouse emissions than coal']
-  },
-  {
-    title: 'Energy Efficiency',
-    points: ['Calorific Value: 3500-5000 Kcal/kg', 'Consistent performance']
-  },
-  {
-    title: 'Cost Efficiency',
-    points: ['Cheaper than coal and firewood', 'Stable pricing']
-  },
-  {
-    title: 'Logistics',
-    points: ['Easy storage', 'Easy transportation']
-  }
+  ['Format', '6-8 mm cylindrical fuel', '90 mm dense fuel block'],
+  ['Best Fit', 'Automated or smaller controlled systems', 'Industrial heat demand'],
+  ['Density', 'High', 'Moderate to high'],
+  ['Combustion', 'Higher energy response', 'Longer duration burning'],
+  ['Moisture', 'Typically below 10%', 'Typically around 15-20%']
 ];
 
 const whatsappLinks = {
   devesh:
-    'https://wa.me/918550952303?text=Hello%20Mahalaxmi%20Agro%20Energies%2C%20I%20would%20like%20to%20know%20more%20about%20your%20products.',
+    'https://wa.me/918550952303?text=Hello%20Mahalaxmi%20Agro%20Energies.%20I%20want%20to%20know%20more%20about%20your%20biomass%20products%2C%20plant%20setup%2C%20and%20related%20services.',
   amit:
-    'https://wa.me/919890514547?text=Hello%20Mahalaxmi%20Agro%20Energies%2C%20I%20would%20like%20to%20know%20more%20about%20your%20products.'
+    'https://wa.me/919890514547?text=Hello%20Mahalaxmi%20Agro%20Energies.%20I%20want%20to%20know%20more%20about%20your%20biomass%20products.'
 };
+
+const consultationLink =
+  'https://wa.me/918550952303?text=Hello%20Devesh%2C%20I%20would%20like%20to%20book%20a%20free%20consultation%20for%20biomass%20products%2C%20bio-energy%20services%2C%20machinery%20installation%2C%20or%20plant%20setup.';
 
 function LandingPage() {
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const mapEmbedUrl = useMemo(
+    () => 'https://maps.google.com/maps?q=21.10248,79.1082&z=15&output=embed',
+    []
+  );
 
   return (
     <div className="landing-page">
       <header className="site-header">
         <div className="site-header__inner">
-          <div className="site-brand">
-            <img src={`${process.env.PUBLIC_URL}/mae-logo.png`} alt={firmDetails.name} className="site-brand__logo" />
+          <a href="#top" className="site-brand site-brand--link">
+            <img
+              src={`${process.env.PUBLIC_URL}/mae-logo.png`}
+              alt={firmDetails.name}
+              className="site-brand__logo"
+            />
             <div className="site-brand__copy">
               <strong>{firmDetails.name}</strong>
-              <span>{firmDetails.address}</span>
-              <span>
-                GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
-              </span>
+              <span>Energy for Tomorrow</span>
+              <span>Nagpur based biomass fuels and bio energy project support</span>
             </div>
-          </div>
+          </a>
           <div className="site-header__actions">
             <a href="#products" className="site-link">
               Products
             </a>
-            <a href="#process" className="site-link">
-              Process
+            <a href="#benefits" className="site-link">
+              Benefits
             </a>
-            <a href="#advantages" className="site-link">
-              Advantages
+            <a href="#services" className="site-link">
+              Services
+            </a>
+            <a href="#location" className="site-link">
+              Location
+            </a>
+            <a href={consultationLink} className="hero-btn hero-btn--primary" target="_blank" rel="noreferrer">
+              Book Free Consultation
             </a>
           </div>
         </div>
       </header>
 
-      <main>
+      <main id="top">
         <section className="hero-section">
-          <div className="hero-section__inner">
-            <div className="hero-copy">
+          <div className="hero-section__inner hero-section__inner--wide">
+            <div className="hero-copy hero-copy--modern">
               <p className="hero-kicker">Sustainable Biomass Fuel Solutions</p>
-              <h1>Pellets and briquettes built for industrial and commercial energy needs.</h1>
+              <h1>Industrial biofuel supply and bio energy project support from Nagpur.</h1>
               <p className="hero-text">
-                Energy for Tomorrow. Eco-friendly, high-performance fuel alternatives designed to
-                support cleaner energy use, dependable supply, and practical commercial handling,
-                along with consulting support for bio energy project machinery installation and
-                plant setup.
+                {firmDetails.name} manufactures and supplies biomass briquettes, biomass pellets,
+                sawdust, stoves, and related support products, while also consulting on bio energy
+                projects, machinery installation, and plant setup.
+              </p>
+              <p className="hero-text hero-text--compact">
+                Founded in 2020 in Nagpur, we serve businesses looking for cleaner, practical, and
+                commercially workable alternatives to conventional solid fuels.
               </p>
               <div className="hero-actions">
                 <a href="#products" className="hero-btn hero-btn--primary">
-                  Explore Products
+                  Explore Product Range
+                </a>
+                <a
+                  href={consultationLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hero-btn hero-btn--secondary"
+                >
+                  Book a Free Consultation
                 </a>
                 <button
                   type="button"
-                  className="hero-btn hero-btn--secondary hero-btn--button"
+                  className="hero-btn hero-btn--ghost hero-btn--button"
                   onClick={() => setIsContactOpen(true)}
                 >
                   Contact Us
                 </button>
               </div>
             </div>
-            <div className="hero-panel">
-              <div className="hero-panel__card">
-                <span>Core Focus</span>
+
+            <div className="hero-stack">
+              <div className="hero-highlight-card">
+                <p className="hero-highlight-card__label">Why customers come to us</p>
                 <ul>
-                  <li>Biomass pellets and briquettes for industrial and commercial use</li>
-                  <li>Cleaner fuel alternatives built from organic and agro-waste sources</li>
-                  <li>Consulting for bio energy projects, machinery installation, and plant setup</li>
+                  <li>Biomass pellets and briquettes for practical industrial use</li>
+                  <li>Product supply plus machinery and plant setup consulting</li>
+                  <li>Nagpur-based team with responsive helpdesk and WhatsApp support</li>
                 </ul>
+              </div>
+              <div className="stats-grid">
+                {companyStats.map((stat) => (
+                  <article key={stat.label} className="stat-card">
+                    <strong>{stat.value}</strong>
+                    <span>{stat.label}</span>
+                  </article>
+                ))}
               </div>
             </div>
           </div>
         </section>
 
-        <section className="content-section" id="process">
-          <div className="content-grid">
-            <article className="content-card">
-              <p className="section-kicker">Raw Materials</p>
-              <h2>Organic inputs chosen for dependable fuel performance.</h2>
-              <div className="chip-list">
-                {rawMaterials.map((item) => (
-                  <span key={item} className="info-chip">
-                    {item}
-                  </span>
-                ))}
+        <section className="narrative-section">
+          <div className="section-shell">
+            <div className="section-heading section-heading--split">
+              <div>
+                <p className="section-kicker">What We Do</p>
+                <h2>A clearer view of our business, products, and service support.</h2>
               </div>
-            </article>
-            <article className="content-card">
-              <p className="section-kicker">Manufacturing Process</p>
-              <h2>Simple production flow with no additives required.</h2>
-              <ol className="number-list">
-                {manufacturingSteps.map((step) => (
-                  <li key={step}>{step}</li>
-                ))}
-              </ol>
-              <p className="process-note">
-                Natural lignin acts as a binder, which removes the need for added chemicals.
+              <p className="section-intro">
+                We focus on biofuel products that are easier to store, move, and use in real-world
+                industrial environments, while also helping customers with plant planning and
+                machinery execution decisions.
               </p>
-            </article>
+            </div>
+
+            <div className="message-grid">
+              <article className="message-card">
+                <strong>Manufacturer and Supplier</strong>
+                <p>
+                  Biomass briquettes, biomass pellets, sawdust, biomass stove, cashew cake and
+                  related support products for industrial, commercial, wholesale and retail demand.
+                </p>
+              </article>
+              <article className="message-card">
+                <strong>Consulting and Execution Guidance</strong>
+                <p>
+                  Support for bio energy projects including machinery installation, fuel planning,
+                  and plant setup advisory for customers moving toward biomass-led operations.
+                </p>
+              </article>
+              <article className="message-card">
+                <strong>Built for Commercial Use</strong>
+                <p>
+                  We position products around actual operational fit: boiler use, heating systems,
+                  combustion reliability, handling simplicity, and cost practicality.
+                </p>
+              </article>
+            </div>
           </div>
         </section>
 
         <section className="products-section" id="products">
-          <div className="section-heading">
-            <p className="section-kicker">Products</p>
-            <h2>Fuel and support products aligned with real operational demand.</h2>
-          </div>
-          <div className="product-grid product-grid--expanded">
-            {products.map((product) => (
-              <article key={product.title} className="product-card">
-                {product.image ? (
-                  <img className="product-image" src={product.image} alt={product.title} />
-                ) : null}
-                <strong>{product.title}</strong>
-                <ul className="product-points">
-                  {product.points.map((point) => (
-                    <li key={point}>{point}</li>
-                  ))}
-                </ul>
-                <p className="product-subheading">{product.subheading}</p>
-                <ul className="product-details">
-                  {product.details.map((detail) => (
-                    <li key={detail}>{detail}</li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-        </section>
+          <div className="section-shell">
+            <div className="section-heading">
+              <p className="section-kicker">Product Categories</p>
+              <h2>A more organized product structure for buyers and project decision-makers.</h2>
+            </div>
 
-        <section className="comparison-section">
-          <div className="section-heading">
-            <p className="section-kicker">Briquettes vs Pellets</p>
-            <h2>A quick comparison between the two primary biomass fuel formats.</h2>
-          </div>
-          <div className="comparison-card">
-            <div className="comparison-table-wrap">
-              <table className="comparison-table">
-                <thead>
-                  <tr>
-                    <th>Feature</th>
-                    <th>Pellets</th>
-                    <th>Briquettes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparisonRows.map((row) => (
-                    <tr key={row[0]}>
-                      <td>{row[0]}</td>
-                      <td>{row[1]}</td>
-                      <td>{row[2]}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="category-grid">
+              {productCategories.map((category) => (
+                <article key={category.title} className="category-card">
+                  <strong>{category.title}</strong>
+                  <p>{category.description}</p>
+                </article>
+              ))}
+            </div>
+
+            <div className="family-stack">
+              {productFamilies.map((family) => (
+                <section key={family.title} className="family-section">
+                  <div className="family-heading">
+                    <div>
+                      <p className="section-kicker">{family.title}</p>
+                      <h3>{family.description}</h3>
+                    </div>
+                  </div>
+                  <div className="product-grid product-grid--family">
+                    {family.items.map((item) => (
+                      <article key={item.title} className="product-card product-card--fresh">
+                        {item.image ? (
+                          <img className="product-image" src={item.image} alt={item.title} />
+                        ) : null}
+                        <strong>{item.title}</strong>
+                        <ul className="product-points">
+                          {item.points.map((point) => (
+                            <li key={point}>{point}</li>
+                          ))}
+                        </ul>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="content-section">
-          <div className="content-grid">
-            <article className="content-card">
-              <p className="section-kicker">Key Types and Specifications</p>
-              <h2>Agro-waste and sawdust-based briquette options.</h2>
-              <div className="detail-stack">
-                <p><strong>Agro-Waste Briquettes</strong></p>
-                <p>Raw materials: mustard husk, groundnut shells, cotton stalk</p>
-                <p>Calorific Value: 4000-4500 Kcal/kg</p>
-                <p>Moisture: 10-15%</p>
-                <p><strong>Sawdust/Wood Briquettes</strong></p>
-                <p>Higher density, uniform combustion, suitable for industrial boilers</p>
+        <section className="content-section content-section--warm">
+          <div className="section-shell">
+            <div className="section-heading section-heading--split">
+              <div>
+                <p className="section-kicker">Raw Materials and Process</p>
+                <h2>Feedstock selection and a straightforward manufacturing flow.</h2>
               </div>
-            </article>
-          </div>
-        </section>
+              <p className="section-intro">
+                Sawdust, wood chips, rice husk, groundnut shells, and bagasse are among the core
+                biomass sources we work with. Natural lignin can act as a binder, reducing the need
+                for additive-heavy processing.
+              </p>
+            </div>
 
-        <section className="advantages-section" id="advantages">
-          <div className="section-heading">
-            <p className="section-kicker">Advantages of Biomass Fuel</p>
-            <h2>Environmental, energy, cost, and logistics benefits in one view.</h2>
-          </div>
-          <div className="advantage-grid">
-            {advantages.map((advantage) => (
-              <article key={advantage.title} className="advantage-card">
-                <strong>{advantage.title}</strong>
-                <ul>
-                  {advantage.points.map((point) => (
-                    <li key={point}>{point}</li>
+            <div className="process-layout">
+              <article className="content-card content-card--contrast">
+                <p className="section-kicker">Raw Materials</p>
+                <div className="chip-list">
+                  {['Sawdust', 'Wood chips', 'Rice husk', 'Groundnut shells', 'Bagasse'].map((item) => (
+                    <span key={item} className="info-chip">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </article>
+
+              <article className="content-card">
+                <p className="section-kicker">Manufacturing Process</p>
+                <ol className="number-list">
+                  {processSteps.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+              </article>
+
+              <article className="content-card">
+                <p className="section-kicker">Applications</p>
+                <ul className="product-points">
+                  {applications.map((application) => (
+                    <li key={application}>{application}</li>
                   ))}
                 </ul>
               </article>
-            ))}
+            </div>
           </div>
         </section>
 
+        <section className="comparison-section">
+          <div className="section-shell">
+            <div className="section-heading">
+              <p className="section-kicker">Pellets vs Briquettes</p>
+              <h2>Choose the fuel format based on system type, handling, and burn profile.</h2>
+            </div>
+            <div className="comparison-card">
+              <div className="comparison-table-wrap">
+                <table className="comparison-table">
+                  <thead>
+                    <tr>
+                      <th>Feature</th>
+                      <th>Pellets</th>
+                      <th>Briquettes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {comparisonRows.map((row) => (
+                      <tr key={row[0]}>
+                        <td>{row[0]}</td>
+                        <td>{row[1]}</td>
+                        <td>{row[2]}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="advantages-section" id="benefits">
+          <div className="section-shell">
+            <div className="section-heading section-heading--split">
+              <div>
+                <p className="section-kicker">Advantages and Key Benefits</p>
+                <h2>Separated into business benefits and technical product strengths.</h2>
+              </div>
+              <p className="section-intro">
+                This section is intentionally split so customers can quickly understand both the
+                commercial upside and the product-level reasoning behind biomass adoption.
+              </p>
+            </div>
+
+            <div className="benefit-layout">
+              <div className="benefit-column">
+                <h3>Key Benefits</h3>
+                <div className="advantage-grid advantage-grid--stacked">
+                  {keyBenefits.map((benefit) => (
+                    <article key={benefit.title} className="advantage-card">
+                      <strong>{benefit.title}</strong>
+                      <ul>
+                        {benefit.points.map((point) => (
+                          <li key={point}>{point}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              </div>
+
+              <div className="benefit-column">
+                <h3>Technical Advantages</h3>
+                <div className="advantage-grid advantage-grid--stacked">
+                  {technicalAdvantages.map((advantage) => (
+                    <article key={advantage.title} className="advantage-card advantage-card--accent">
+                      <strong>{advantage.title}</strong>
+                      <ul>
+                        {advantage.points.map((point) => (
+                          <li key={point}>{point}</li>
+                        ))}
+                      </ul>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="services-section" id="services">
+          <div className="section-shell">
+            <div className="services-panel">
+              <div className="services-copy">
+                <p className="section-kicker">Bio Energy Services</p>
+                <h2>Book a conversation for products, machinery, or plant setup support.</h2>
+                <p>
+                  Along with fuel supply, we also consult on bio energy projects. If you are
+                  exploring machinery installation, plant setup, or product selection for a new or
+                  existing operation, we can help you start with a practical discussion.
+                </p>
+                <div className="hero-actions">
+                  <a href={consultationLink} className="hero-btn hero-btn--primary" target="_blank" rel="noreferrer">
+                    Book a Free Consultation
+                  </a>
+                  <button
+                    type="button"
+                    className="hero-btn hero-btn--ghost hero-btn--button"
+                    onClick={() => setIsContactOpen(true)}
+                  >
+                    Talk to Helpdesk
+                  </button>
+                </div>
+              </div>
+              <div className="services-list-card">
+                <strong>We can help with</strong>
+                <ul>
+                  <li>Product selection for pellets, briquettes, rice husk, DOC, and support inputs</li>
+                  <li>Machinery installation planning</li>
+                  <li>Plant setup discussion and execution guidance</li>
+                  <li>Commercial and industrial use-case alignment</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="location-section" id="location">
+          <div className="section-shell">
+            <div className="section-heading section-heading--split">
+              <div>
+                <p className="section-kicker">Location</p>
+                <h2>Visit or navigate to our Nagpur location.</h2>
+              </div>
+              <a
+                href="https://www.google.co.in/maps/dir//21.10248000,79.10820000"
+                target="_blank"
+                rel="noreferrer"
+                className="site-link site-link--action"
+              >
+                Open Directions
+              </a>
+            </div>
+
+            <div className="location-grid">
+              <div className="map-card">
+                <iframe
+                  title="Mahalaxmi Agro Energies location"
+                  src={mapEmbedUrl}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+              <div className="location-card">
+                <strong>{firmDetails.name}</strong>
+                <p>{firmDetails.address}</p>
+                <p>Email: biomassenergies@gmail.com</p>
+                <p>Customer Helpdesk: Devesh - 8550952303, Amit - 9890514547</p>
+                <div className="footer-whatsapp-links">
+                  <a href={whatsappLinks.devesh} target="_blank" rel="noreferrer">
+                    WhatsApp Devesh
+                  </a>
+                  <a href={whatsappLinks.amit} target="_blank" rel="noreferrer">
+                    WhatsApp Amit
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="site-footer">
@@ -307,15 +552,13 @@ function LandingPage() {
           <section className="footer-column">
             <h3>About Us</h3>
             <p>
-              {firmDetails.name} offers biomass pellets, briquettes, and related fuel-support
-              products for industrial and commercial energy needs. We focus on eco-friendly fuel
-              options, dependable supply, and consulting support for bio energy projects including
-              machinery installation and plant setup.
+              Mahalaxmi Agro Energies is a Nagpur-based manufacturer and supplier of biofuels,
+              established in 2020, serving industrial and commercial fuel requirements with biomass
+              briquettes, biomass pellets, sawdust, biomass stove, and allied products.
             </p>
             <p>
-              Mahalaxmi Agro Energies : Manufacturer & Supplier Of Biofuels - Manufacturer,
-              Wholesaler and Retail Traders of Biomass Briquettes, Biomass Pellets, Sawdust,
-              Biomass Stove & Cashew Cake since 2019 in Nagpur, Maharashtra.
+              We also consult on bio energy projects in terms of machinery installation and plant
+              setup, helping customers move from interest to implementation with better clarity.
             </p>
           </section>
 
@@ -323,7 +566,7 @@ function LandingPage() {
             <h3>Get In Touch</h3>
             <p>Address: {firmDetails.address}</p>
             <p>Email: biomassenergies@gmail.com</p>
-            <p>Customer Helpdesk: Devesh - 8550952303, Amit - 9890514547</p>
+            <p>Customer Helpdesk Numbers: Devesh - 8550952303, Amit - 9890514547</p>
             <div className="footer-whatsapp-links">
               <a href={whatsappLinks.devesh} target="_blank" rel="noreferrer">
                 WhatsApp Devesh
@@ -336,7 +579,8 @@ function LandingPage() {
 
           <section className="footer-column footer-column--meta">
             <p className="footer-note">
-              Biomass fuel solutions for cleaner industrial and commercial energy use.
+              Manufacturer and supplier of biofuels with consulting support for products, machinery,
+              and plant setup.
             </p>
             <p className="footer-fineprint">
               Internal use only:{' '}
@@ -382,6 +626,11 @@ function LandingPage() {
                 </a>
               </p>
               <p>Address: {firmDetails.address}</p>
+              <p>
+                <a href={consultationLink} target="_blank" rel="noreferrer">
+                  Book a Free Consultation
+                </a>
+              </p>
             </div>
           </div>
         </div>

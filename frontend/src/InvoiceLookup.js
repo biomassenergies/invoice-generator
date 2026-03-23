@@ -9,6 +9,7 @@ const InvoiceLookup = () => {
   const [invoiceDetails, setInvoiceDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
 
   useEffect(() => {
     fetchInvoices();
@@ -44,6 +45,7 @@ const InvoiceLookup = () => {
 
   const handleSelectInvoice = (invoiceNumber) => {
     setSelectedInvoice(invoiceNumber);
+    setMobileDetailsOpen(true);
     fetchInvoiceDetails(invoiceNumber);
   };
 
@@ -134,6 +136,13 @@ const InvoiceLookup = () => {
         </div>
 
         <div className="invoice-details-panel">
+          <button
+            type="button"
+            className="mobile-back-btn"
+            onClick={() => setMobileDetailsOpen(false)}
+          >
+            Back to Invoice List
+          </button>
           {selectedInvoice ? (
             <>
               <div className="details-header">
@@ -216,6 +225,111 @@ const InvoiceLookup = () => {
           )}
         </div>
       </div>
+
+      {selectedInvoice ? (
+        <button
+          type="button"
+          className="mobile-details-launcher"
+          onClick={() => setMobileDetailsOpen(true)}
+        >
+          View Selected Invoice
+        </button>
+      ) : null}
+
+      {mobileDetailsOpen && selectedInvoice ? (
+        <div className="mobile-details-backdrop" onClick={() => setMobileDetailsOpen(false)}>
+          <div className="mobile-details-sheet" onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-details-sheet__header">
+              <strong>{selectedInvoice}</strong>
+              <button
+                type="button"
+                className="mobile-sheet-close"
+                onClick={() => setMobileDetailsOpen(false)}
+              >
+                x
+              </button>
+            </div>
+            <div className="mobile-details-sheet__body">
+              <div className="invoice-details-panel invoice-details-panel--mobile">
+                <div className="details-header">
+                  <h2>Invoice Details</h2>
+                  <div className="action-buttons">
+                    <button className="btn-download" onClick={handleDownloadPDF}>
+                      Download PDF
+                    </button>
+                    <button className="btn-print" onClick={handlePrint}>
+                      Print
+                    </button>
+                  </div>
+                </div>
+
+                {invoiceDetails ? (
+                  <div className="invoice-details">
+                    <div className="details-section">
+                      <h3>Invoice Information</h3>
+                      <div className="detail-row">
+                        <span className="detail-label">Invoice Number:</span>
+                        <span className="detail-value">{invoiceDetails.invoiceNumber}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="detail-label">Date:</span>
+                        <span className="detail-value">{invoiceDetails.date}</span>
+                      </div>
+                    </div>
+
+                    <div className="details-section">
+                      <h3>Customer Details</h3>
+                      <div className="detail-row">
+                        <span className="detail-label">Consignee Name:</span>
+                        <span className="detail-value">{invoiceDetails.consigneeName}</span>
+                      </div>
+                      <div className="detail-row">
+                        <span className="detail-label">Buyer:</span>
+                        <span className="detail-value">{invoiceDetails.buyer}</span>
+                      </div>
+                    </div>
+
+                    <div className="details-section">
+                      <h3>Items</h3>
+                      <table className="items-table">
+                        <thead>
+                          <tr>
+                            <th>Product</th>
+                            <th>HSN Code</th>
+                            <th>Qty</th>
+                            <th>Rate</th>
+                            <th>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(invoiceDetails.items || []).map((item, idx) => (
+                            <tr key={`${item.product}-${idx}`}>
+                              <td>{item.product}</td>
+                              <td>{item.hsn}</td>
+                              <td>{item.qty}</td>
+                              <td>{formatCurrency(item.rate)}</td>
+                              <td>{formatCurrency(item.amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="details-section total-section">
+                      <div className="detail-row total-row">
+                        <span className="total-label">Grand Total:</span>
+                        <span className="total-value">{formatCurrency(invoiceDetails.total)}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="loading-text">Loading invoice details...</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };
