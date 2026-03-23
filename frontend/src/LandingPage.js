@@ -196,57 +196,61 @@ function LandingPage() {
 
       <main id="top">
         <section className="hero-section">
-          <div className="hero-section__inner hero-section__inner--wide">
-            <div className="hero-copy hero-copy--modern">
+          <div className="section-shell">
+            <div className="hero-card hero-card--unified">
               <p className="hero-kicker">Sustainable Biomass Fuel Solutions</p>
-              <h1>Industrial biofuel supply and bio energy project support from Nagpur.</h1>
-              <p className="hero-text">
-                {firmDetails.name} manufactures and supplies biomass briquettes, biomass pellets,
-                sawdust, stoves, and related support products, while also consulting on bio energy
-                projects, machinery installation, and plant setup.
-              </p>
-              <p className="hero-text hero-text--compact">
-                Founded in 2020 in Nagpur, we serve businesses looking for cleaner, practical, and
-                commercially workable alternatives to conventional solid fuels.
-              </p>
-              <div className="hero-actions">
-                <a href="#products" className="hero-btn hero-btn--primary">
-                  Explore Product Range
-                </a>
-                <a
-                  href={consultationLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hero-btn hero-btn--secondary"
-                >
-                  Book a Free Consultation
-                </a>
-                <button
-                  type="button"
-                  className="hero-btn hero-btn--ghost hero-btn--button"
-                  onClick={() => setIsContactOpen(true)}
-                >
-                  Contact Us
-                </button>
-              </div>
-            </div>
+              <div className="hero-card__layout">
+                <div className="hero-copy hero-copy--modern">
+                  <h1>Biomass fuels, product supply, and project support for cleaner energy use.</h1>
+                  <p className="hero-text">
+                    {firmDetails.name} manufactures and supplies biomass briquettes, biomass pellets,
+                    sawdust, stoves, and related support products, while also consulting on bio
+                    energy projects, machinery installation, and plant setup.
+                  </p>
+                  <p className="hero-text hero-text--compact">
+                    Founded in 2020 in Nagpur, we work with businesses looking for practical,
+                    commercially workable alternatives to conventional solid fuels.
+                  </p>
+                  <div className="hero-actions">
+                    <a href="#products" className="hero-btn hero-btn--primary">
+                      Explore Product Range
+                    </a>
+                    <a
+                      href={consultationLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hero-btn hero-btn--secondary"
+                    >
+                      Book a Free Consultation
+                    </a>
+                    <button
+                      type="button"
+                      className="hero-btn hero-btn--ghost hero-btn--button"
+                      onClick={() => setIsContactOpen(true)}
+                    >
+                      Contact Us
+                    </button>
+                  </div>
+                </div>
 
-            <div className="hero-stack">
-              <div className="hero-highlight-card">
-                <p className="hero-highlight-card__label">Why customers come to us</p>
-                <ul>
-                  <li>Biomass pellets and briquettes for practical industrial use</li>
-                  <li>Product supply plus machinery and plant setup consulting</li>
-                  <li>Nagpur-based team with responsive helpdesk and WhatsApp support</li>
-                </ul>
-              </div>
-              <div className="stats-grid">
-                {companyStats.map((stat) => (
-                  <article key={stat.label} className="stat-card">
-                    <strong>{stat.value}</strong>
-                    <span>{stat.label}</span>
-                  </article>
-                ))}
+                <div className="hero-stack hero-stack--inside">
+                  <div className="hero-highlight-card">
+                    <p className="hero-highlight-card__label">Why customers come to us</p>
+                    <ul>
+                      <li>Biomass pellets and briquettes for practical industrial use</li>
+                      <li>Product supply plus machinery and plant setup consulting</li>
+                      <li>Nagpur-based team with responsive helpdesk and WhatsApp support</li>
+                    </ul>
+                  </div>
+                  <div className="stats-grid">
+                    {companyStats.map((stat) => (
+                      <article key={stat.label} className="stat-card">
+                        <strong>{stat.value}</strong>
+                        <span>{stat.label}</span>
+                      </article>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
