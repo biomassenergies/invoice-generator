@@ -112,7 +112,6 @@ module.exports = (invoiceData) => {
   }).join('');
 
   const totalAmount = totalTaxable + totalSGST + totalCGST + totalIGST;
-  const totalQuantity = items.reduce((sum, item) => sum + Number(item.qty || 0), 0);
   const totalTaxAmount = totalSGST + totalCGST + totalIGST;
 
   return `
@@ -252,6 +251,21 @@ module.exports = (invoiceData) => {
         .small {
           font-size: 8.5px;
         }
+        .payable-summary {
+          border-left: 1px solid #222;
+          border-right: 1px solid #222;
+          border-bottom: 1px solid #222;
+          padding: 6px 7px;
+        }
+        .payable-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+          margin-bottom: 4px;
+        }
+        .payable-row:last-child {
+          margin-bottom: 0;
+        }
       </style>
     </head>
     <body>
@@ -357,7 +371,7 @@ module.exports = (invoiceData) => {
               <td></td>
               <td class="text-right"><strong>Total</strong></td>
               <td></td>
-              <td class="text-right"><strong>${totalQuantity.toFixed(2)}</strong></td>
+              <td class="text-right"><strong>-</strong></td>
               <td></td>
               <td></td>
               <td class="text-right"><strong>${totalTaxable.toFixed(2)}</strong></td>
@@ -411,6 +425,17 @@ module.exports = (invoiceData) => {
         <div class="words">
           <div><span class="label">Tax Amount (in words)</span></div>
           <div>${amountInWords(totalTaxAmount)}</div>
+        </div>
+
+        <div class="payable-summary">
+          <div class="payable-row">
+            <span class="label">Total Tax Amount</span>
+            <strong>${formatCurrency(totalTaxAmount)}</strong>
+          </div>
+          <div class="payable-row">
+            <span class="label">Total Payable Amount</span>
+            <strong>${formatCurrency(totalAmount)}</strong>
+          </div>
         </div>
 
         <div class="bottom">
