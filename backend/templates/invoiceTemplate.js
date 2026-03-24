@@ -29,8 +29,12 @@ module.exports = (invoiceData) => {
 
   const isMaharashtra = String(customerState || '').trim().toUpperCase() === 'MAHARASHTRA';
   const sealPath = path.join(__dirname, '../../frontend/public/mae-seal.png');
+  const paymentQrPath = path.join(__dirname, '../../frontend/public/mae-payment-qr.png');
   const sealDataUri = fs.existsSync(sealPath)
     ? `data:image/png;base64,${fs.readFileSync(sealPath).toString('base64')}`
+    : '';
+  const paymentQrDataUri = fs.existsSync(paymentQrPath)
+    ? `data:image/png;base64,${fs.readFileSync(paymentQrPath).toString('base64')}`
     : '';
 
   const pan = firm.gstn.slice(2, 12);
@@ -263,6 +267,29 @@ module.exports = (invoiceData) => {
           font-size: 8px;
           margin-top: 3px;
         }
+        .payment-qr-section {
+          margin-top: 12px;
+          padding: 10px 12px 0;
+          text-align: center;
+        }
+        .payment-qr-title {
+          font-size: 11px;
+          font-weight: 700;
+          margin-bottom: 4px;
+        }
+        .payment-qr-copy {
+          font-size: 9px;
+          color: #333;
+          margin-bottom: 8px;
+        }
+        .payment-qr-image {
+          display: block;
+          width: 180px;
+          max-width: 100%;
+          height: auto;
+          margin: 0 auto;
+          border-radius: 10px;
+        }
         .small {
           font-size: 8.5px;
         }
@@ -476,6 +503,14 @@ module.exports = (invoiceData) => {
         </div>
 
         <div class="footer-note">This is a computer generated invoice</div>
+
+        ${paymentQrDataUri ? `
+        <div class="payment-qr-section">
+          <div class="payment-qr-title">Online Payment</div>
+          <div class="payment-qr-copy">Please do online payment using the QR code below.</div>
+          <img src="${paymentQrDataUri}" alt="Payment QR Code" class="payment-qr-image" />
+        </div>
+        ` : ''}
       </div>
     </body>
     </html>
