@@ -45,11 +45,24 @@
   max-height: calc(100vh - 190px);
 }
 
-.search-box {
-  margin-bottom: 20px;
+.lookup-filters {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
-.search-input {
+.filter-group {
+  display: grid;
+  gap: 7px;
+}
+
+.filter-group label {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #51607d;
+}
+
+.filter-select {
   width: 100%;
   padding: 11px 13px;
   border: 1px solid #cfd5e6;
@@ -57,9 +70,10 @@
   font-size: 0.94rem;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  background: #fff;
 }
 
-.search-input:focus {
+.filter-select:focus {
   outline: none;
   border-color: #6a7de0;
   box-shadow: 0 0 0 3px rgba(106, 125, 224, 0.14);
@@ -115,7 +129,23 @@
 }
 
 .invoice-item-number {
-  font-weight: 500;
+  font-weight: 700;
+}
+
+.invoice-item-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.invoice-item-customer,
+.invoice-item-date {
+  font-size: 0.82rem;
+  color: #65708a;
+}
+
+.invoice-item.active .invoice-item-customer,
+.invoice-item.active .invoice-item-date {
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .invoice-item-arrow {
@@ -226,6 +256,14 @@
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 600;
+}
+
+.btn-download:disabled,
+.btn-print:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btn-download {

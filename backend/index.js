@@ -629,13 +629,35 @@ app.get('/api/invoices', async (req, res) => {
       invoiceRows = (await getSheetData('INVOICE DETAILS')).data;
     }
 
-    const invoiceNumbers = [...new Set(
-      invoiceRows
-        .map(row => row['Invoice Number'])
-        .filter(Boolean)
-    )].sort((a, b) => String(b).localeCompare(String(a)));
+    const invoiceMap = new Map();
 
-    res.json(invoiceNumbers);
+    invoiceRows.forEach((row) => {
+      const invoiceNumber = String(row['Invoice Number'] || '').trim();
+      if (!invoiceNumber || invoiceMap.has(invoiceNumber)) {
+        return;
+      }
+
+      const invoiceDate = parseInvoiceDate(row.Dated || row.Date);
+      invoiceMap.set(invoiceNumber, {
+        invoiceNumber,
+        customerName: String(row['Consignee Name'] || row.Buyer || '').trim(),
+        date: row.Dated || row.Date || '',
+        sortDate: invoiceDate ? invoiceDate.toISOString() : '',
+        timestamp: invoiceDate ? invoiceDate.getTime() : 0
+      });
+    });
+
+    const invoices = [...invoiceMap.values()]
+      .sort((a, b) => {
+        if (b.timestamp !== a.timestamp) {
+          return b.timestamp - a.timestamp;
+        }
+
+        return String(b.invoiceNumber).localeCompare(String(a.invoiceNumber));
+      })
+      .map(({ timestamp, ...invoice }) => invoice);
+
+    res.json(invoices);
   } catch (err) {
     console.error('Error fetching invoices:', err);
     res.status(500).json({ error: 'Error fetching invoices', details: err.message });

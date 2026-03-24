@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { downloadInvoicePDF, getInvoice, listInvoices } from './api';
 import './InvoiceLookup.css';
 
 const InvoiceLookup = () => {
   const [invoices, setInvoices] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState('');
+  const [selectedInvoice, setSelectedInvoice] = useState('');
   const [invoiceDetails, setInvoiceDetails] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState('');
   const [mobileDetailsOpen, setMobileDetailsOpen] = useState(false);
 
@@ -31,7 +32,7 @@ const InvoiceLookup = () => {
 
   const fetchInvoiceDetails = async (invoiceNumber) => {
     try {
-      setLoading(true);
+      setDetailLoading(true);
       setError('');
       const response = await getInvoice(invoiceNumber);
       setInvoiceDetails(response.data);
@@ -39,19 +40,37 @@ const InvoiceLookup = () => {
       setError('Failed to fetch invoice details: ' + (err.response?.data?.details || err.message));
       setInvoiceDetails(null);
     } finally {
-      setLoading(false);
+      setDetailLoading(false);
     }
   };
+
+  const customerOptions = useMemo(
+    () => [...new Set(invoices.map((invoice) => invoice.customerName).filter(Boolean))].sort(),
+    [invoices]
+  );
+
+  const filteredInvoices = useMemo(() => {
+    return invoices.filter((invoice) => {
+      if (!selectedCustomer) {
+        return true;
+      }
+      return invoice.customerName === selectedCustomer;
+    });
+  }, [invoices, selectedCustomer]);
+
+  useEffect(() => {
+    if (selectedInvoice && !filteredInvoices.some((invoice) => invoice.invoiceNumber === selectedInvoice)) {
+      setSelectedInvoice('');
+      setInvoiceDetails(null);
+      setMobileDetailsOpen(false);
+    }
+  }, [filteredInvoices, selectedInvoice]);
 
   const handleSelectInvoice = (invoiceNumber) => {
     setSelectedInvoice(invoiceNumber);
     setMobileDetailsOpen(true);
     fetchInvoiceDetails(invoiceNumber);
   };
-
-  const filteredInvoices = invoices.filter(invoiceNumber =>
-    invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const formatCurrency = (value) => {
     const numeric = Number(String(value ?? 0).replace(/,/g, ''));
@@ -95,23 +114,135 @@ const InvoiceLookup = () => {
     }
   };
 
+  const renderDetails = () => {
+    if (!selectedInvoice) {
+      return (
+        <div className="no-selection">
+          <p>Select an invoice to view details</p>
+        </div>
+      );
+    }
+
+    if (detailLoading) {
+      return <p className="loading-text">Loading invoice details...</p>;
+    }
+
+    if (!invoiceDetails) {
+      return null;
+    }
+
+    return (
+      <div className="invoice-details">
+        <div className="details-section">
+          <h3>Invoice Information</h3>
+          <div className="detail-row">
+            <span className="detail-label">Invoice Number:</span>
+            <span className="detail-value">{invoiceDetails.invoiceNumber}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Date:</span>
+            <span className="detail-value">{invoiceDetails.date}</span>
+          </div>
+        </div>
+
+        <div className="details-section">
+          <h3>Customer Details</h3>
+          <div className="detail-row">
+            <span className="detail-label">Consignee Name:</span>
+            <span className="detail-value">{invoiceDetails.consigneeName}</span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-label">Buyer:</span>
+            <span className="detail-value">{invoiceDetails.buyer}</span>
+          </div>
+        </div>
+
+        <div className="details-section">
+          <h3>Items</h3>
+          <table className="items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>HSN Code</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(invoiceDetails.items || []).map((item, idx) => (
+                <tr key={`${item.product}-${idx}`}>
+                  <td>{item.product}</td>
+                  <td>{item.hsn}</td>
+                  <td>{item.qty}</td>
+                  <td>{formatCurrency(item.rate)}</td>
+                  <td>{formatCurrency(item.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="details-section total-section">
+          <div className="detail-row total-row">
+            <span className="total-label">Grand Total:</span>
+            <span className="total-value">{formatCurrency(invoiceDetails.total)}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="invoice-lookup-container">
       <div className="lookup-header">
         <h1>Invoice Lookup</h1>
-        <p>Search and view your invoices</p>
+        <p>Filter by customer, pick an invoice, and review the latest records first.</p>
       </div>
 
       <div className="lookup-content">
         <div className="invoice-list-panel">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search invoice number..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+          <div className="lookup-filters">
+            <div className="filter-group">
+              <label>Customer</label>
+              <select
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">All Customers</option>
+                {customerOptions.map((customerName) => (
+                  <option key={customerName} value={customerName}>
+                    {customerName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Invoice</label>
+              <select
+                value={selectedInvoice}
+                onChange={(e) => {
+                  const invoiceNumber = e.target.value;
+                  if (!invoiceNumber) {
+                    setSelectedInvoice('');
+                    setInvoiceDetails(null);
+                    setMobileDetailsOpen(false);
+                    return;
+                  }
+                  handleSelectInvoice(invoiceNumber);
+                }}
+                className="filter-select"
+              >
+                <option value="">Select Invoice</option>
+                {filteredInvoices.map((invoice) => (
+                  <option key={invoice.invoiceNumber} value={invoice.invoiceNumber}>
+                    {invoice.invoiceNumber} | {invoice.date || 'No Date'} | {invoice.customerName || 'Unknown'}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {error && <div className="error-message">{error}</div>}
@@ -121,13 +252,17 @@ const InvoiceLookup = () => {
             {!loading && filteredInvoices.length === 0 ? (
               <p className="no-data">No invoices found</p>
             ) : (
-              filteredInvoices.map((invoiceNumber) => (
+              filteredInvoices.map((invoice) => (
                 <div
-                  key={invoiceNumber}
-                  className={`invoice-item ${selectedInvoice === invoiceNumber ? 'active' : ''}`}
-                  onClick={() => handleSelectInvoice(invoiceNumber)}
+                  key={invoice.invoiceNumber}
+                  className={`invoice-item ${selectedInvoice === invoice.invoiceNumber ? 'active' : ''}`}
+                  onClick={() => handleSelectInvoice(invoice.invoiceNumber)}
                 >
-                  <div className="invoice-item-number">{invoiceNumber}</div>
+                  <div className="invoice-item-meta">
+                    <div className="invoice-item-number">{invoice.invoiceNumber}</div>
+                    <div className="invoice-item-customer">{invoice.customerName || 'Unknown Customer'}</div>
+                    <div className="invoice-item-date">{invoice.date || 'No Date'}</div>
+                  </div>
                   <div className="invoice-item-arrow">{'>'}</div>
                 </div>
               ))
@@ -136,93 +271,18 @@ const InvoiceLookup = () => {
         </div>
 
         <div className="invoice-details-panel">
-          <button
-            type="button"
-            className="mobile-back-btn"
-            onClick={() => setMobileDetailsOpen(false)}
-          >
-            Back to Invoice List
-          </button>
-          {selectedInvoice ? (
-            <>
-              <div className="details-header">
-                <h2>Invoice Details</h2>
-                <div className="action-buttons">
-                  <button className="btn-download" onClick={handleDownloadPDF}>
-                    Download PDF
-                  </button>
-                  <button className="btn-print" onClick={handlePrint}>
-                    Print
-                  </button>
-                </div>
-              </div>
-
-              {invoiceDetails && (
-                <div className="invoice-details">
-                  <div className="details-section">
-                    <h3>Invoice Information</h3>
-                    <div className="detail-row">
-                      <span className="detail-label">Invoice Number:</span>
-                      <span className="detail-value">{invoiceDetails.invoiceNumber}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Date:</span>
-                      <span className="detail-value">{invoiceDetails.date}</span>
-                    </div>
-                  </div>
-
-                  <div className="details-section">
-                    <h3>Customer Details</h3>
-                    <div className="detail-row">
-                      <span className="detail-label">Consignee Name:</span>
-                      <span className="detail-value">{invoiceDetails.consigneeName}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">Buyer:</span>
-                      <span className="detail-value">{invoiceDetails.buyer}</span>
-                    </div>
-                  </div>
-
-                  <div className="details-section">
-                    <h3>Items</h3>
-                    <table className="items-table">
-                      <thead>
-                        <tr>
-                          <th>Product</th>
-                          <th>HSN Code</th>
-                          <th>Qty</th>
-                          <th>Rate</th>
-                          <th>Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(invoiceDetails.items || []).map((item, idx) => (
-                          <tr key={`${item.product}-${idx}`}>
-                            <td>{item.product}</td>
-                            <td>{item.hsn}</td>
-                            <td>{item.qty}</td>
-                            <td>{formatCurrency(item.rate)}</td>
-                            <td>{formatCurrency(item.amount)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="details-section total-section">
-                    <div className="detail-row total-row">
-                      <span className="total-label">Grand Total:</span>
-                      <span className="total-value">{formatCurrency(invoiceDetails.total)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="no-selection">
-              <p>Select an invoice to view details</p>
+          <div className="details-header">
+            <h2>Invoice Details</h2>
+            <div className="action-buttons">
+              <button className="btn-download" onClick={handleDownloadPDF} disabled={!selectedInvoice}>
+                Download PDF
+              </button>
+              <button className="btn-print" onClick={handlePrint} disabled={!selectedInvoice}>
+                Print
+              </button>
             </div>
-          )}
+          </div>
+          {renderDetails()}
         </div>
       </div>
 
@@ -262,69 +322,7 @@ const InvoiceLookup = () => {
                     </button>
                   </div>
                 </div>
-
-                {invoiceDetails ? (
-                  <div className="invoice-details">
-                    <div className="details-section">
-                      <h3>Invoice Information</h3>
-                      <div className="detail-row">
-                        <span className="detail-label">Invoice Number:</span>
-                        <span className="detail-value">{invoiceDetails.invoiceNumber}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Date:</span>
-                        <span className="detail-value">{invoiceDetails.date}</span>
-                      </div>
-                    </div>
-
-                    <div className="details-section">
-                      <h3>Customer Details</h3>
-                      <div className="detail-row">
-                        <span className="detail-label">Consignee Name:</span>
-                        <span className="detail-value">{invoiceDetails.consigneeName}</span>
-                      </div>
-                      <div className="detail-row">
-                        <span className="detail-label">Buyer:</span>
-                        <span className="detail-value">{invoiceDetails.buyer}</span>
-                      </div>
-                    </div>
-
-                    <div className="details-section">
-                      <h3>Items</h3>
-                      <table className="items-table">
-                        <thead>
-                          <tr>
-                            <th>Product</th>
-                            <th>HSN Code</th>
-                            <th>Qty</th>
-                            <th>Rate</th>
-                            <th>Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(invoiceDetails.items || []).map((item, idx) => (
-                            <tr key={`${item.product}-${idx}`}>
-                              <td>{item.product}</td>
-                              <td>{item.hsn}</td>
-                              <td>{item.qty}</td>
-                              <td>{formatCurrency(item.rate)}</td>
-                              <td>{formatCurrency(item.amount)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <div className="details-section total-section">
-                      <div className="detail-row total-row">
-                        <span className="total-label">Grand Total:</span>
-                        <span className="total-value">{formatCurrency(invoiceDetails.total)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="loading-text">Loading invoice details...</p>
-                )}
+                {renderDetails()}
               </div>
             </div>
           </div>
