@@ -28,6 +28,7 @@ const productFamilies = [
       },
       {
         title: 'Wood Charcoal',
+        image: `${process.env.PUBLIC_URL}/wood charcoal.jpg`,
         points: ['High-heat performance', 'Used in foundry, metallurgy, tandoor and BBQ applications']
       }
     ]
@@ -44,10 +45,12 @@ const productFamilies = [
       },
       {
         title: 'Sawdust',
+        image: `${process.env.PUBLIC_URL}/sawdust.jpg`,
         points: ['Direct from sawmills', 'Available in pure and mixed wood grades']
       },
       {
         title: 'Raw Material Base',
+        image: `${process.env.PUBLIC_URL}/Raw Material Base.jpg`,
         points: ['Sawdust', 'Wood chips', 'Groundnut shells', 'Bagasse', 'Rice husk']
       }
     ]
@@ -58,7 +61,7 @@ const productFamilies = [
     items: [
       {
         title: 'Biomass Pellet Stove',
-        image: `${process.env.PUBLIC_URL}/15KG-Stove.png`,
+        image: `${process.env.PUBLIC_URL}/pellet burner stove.jpg`,
         points: ['Commercial stove burner', 'Available in 1 kg, 5 kg, 10 kg, 15 kg and 20 kg variants']
       },
       {
@@ -69,6 +72,7 @@ const productFamilies = [
       },
       {
         title: 'Project Consulting',
+        image: `${process.env.PUBLIC_URL}/pellet mill consulting.jpg`,
         points: ['Bio energy project planning', 'Machinery installation guidance', 'Plant setup support']
       }
     ]
@@ -360,7 +364,7 @@ function LandingPage() {
 
             <article className="process-panel">
               <div className="process-layout">
-                <section className="process-block process-block--contrast">
+                <section className="process-block">
                   <p className="section-kicker">Raw Materials</p>
                   <div className="chip-list">
                     {['Sawdust', 'Wood chips', 'Rice husk', 'Groundnut shells', 'Bagasse'].map((item) => (

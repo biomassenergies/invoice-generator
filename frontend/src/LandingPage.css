@@ -468,6 +468,22 @@
   background: rgba(247, 249, 253, 0.88);
 }
 
+.process-block .section-kicker,
+.process-block p,
+.process-block li {
+  color: #5a647a;
+}
+
+.process-block .section-kicker {
+  color: #8a611d;
+}
+
+.process-block .info-chip {
+  background: #eef2fa;
+  color: #42506d;
+  border: 1px solid rgba(129, 141, 173, 0.18);
+}
+
 .chip-list {
   display: flex;
   flex-wrap: wrap;
