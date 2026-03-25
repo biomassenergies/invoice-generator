@@ -61,7 +61,7 @@ const productFamilies = [
     items: [
       {
         title: 'Biomass Pellet Stove',
-        image: `${process.env.PUBLIC_URL}/pellet burner stove.jpg`,
+        image: `${process.env.PUBLIC_URL}/MAE 15KG.jpeg`,
         points: ['Commercial stove burner', 'Available in 1 kg, 5 kg, 10 kg, 15 kg and 20 kg variants']
       },
       {
