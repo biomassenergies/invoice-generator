@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: invoice-generator
+    name: maebiofuels
     runtime: node
     plan: free
     buildCommand: cd frontend && npm install && npm run build && cd ../backend && PUPPETEER_CACHE_DIR=/opt/render/project/src/backend/node_modules/.puppeteer_cache npm install
