@@ -78,6 +78,19 @@ const InvoiceLookup = () => {
     return `Rs ${safeValue.toFixed(2)}`;
   };
 
+  const buildPdfFilename = (documentNumber, consigneeName) => {
+    const sanitize = (value, fallback) =>
+      String(value || '')
+        .replace(/[\\/:*?"<>|]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() || fallback;
+
+    return `${sanitize(documentNumber, selectedInvoice || 'Invoice')} - ${sanitize(
+      consigneeName,
+      'Consignee'
+    )}.pdf`;
+  };
+
   const handleDownloadPDF = async () => {
     if (!selectedInvoice) {
       return;
@@ -88,7 +101,10 @@ const InvoiceLookup = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `invoice-${selectedInvoice}.pdf`);
+      link.setAttribute(
+        'download',
+        buildPdfFilename(invoiceDetails?.despatchDocumentNo, invoiceDetails?.consigneeName)
+      );
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);

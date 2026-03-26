@@ -6,41 +6,10 @@
   color: #1e1e1e;
 }
 
-.dashboard-hero {
-  padding: 42px 24px 20px;
-}
-
-.dashboard-hero-copy {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-
-.hero-kicker {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.78rem;
-  color: #7b5a1d;
-  margin-bottom: 12px;
-}
-
-.dashboard-hero h1 {
-  font-size: clamp(2rem, 5vw, 3.6rem);
-  line-height: 1;
-  margin-bottom: 16px;
-  font-family: Georgia, 'Times New Roman', serif;
-}
-
-.dashboard-hero p {
-  max-width: 760px;
-  color: #574f45;
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
 .dashboard-shell {
   max-width: 1180px;
   margin: 0 auto;
-  padding: 0 24px 40px;
+  padding: 20px 24px 40px;
 }
 
 .dashboard-panel,

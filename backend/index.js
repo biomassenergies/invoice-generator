@@ -403,6 +403,15 @@ function sortMetricEntries(metricMap, metricKey) {
     .sort((a, b) => b[metricKey] - a[metricKey] || a.name.localeCompare(b.name));
 }
 
+function sanitizeFilenamePart(value, fallback = 'document') {
+  const sanitized = String(value || '')
+    .replace(/[\\/:*?"<>|]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return sanitized || fallback;
+}
+
 const DATA_MODE = detectDataMode();
 const FRONTEND_BUILD_PATH = path.join(__dirname, '../frontend/build');
 
@@ -1008,6 +1017,7 @@ app.get('/api/invoice/:invoiceNumber', async (req, res) => {
       consigneeName: firstRow['Consignee Name'],
       buyer: firstRow.Buyer,
       date: firstRow.Dated,
+      despatchDocumentNo: firstRow['Despatch Document No.'] || '',
       items,
       total
     });
@@ -1244,8 +1254,13 @@ app.get('/api/invoice/:invoiceNumber/pdf', async (req, res) => {
 
     await browser.close();
 
+    const exportFilename = `${sanitizeFilenamePart(
+      firstRow['Despatch Document No.'],
+      invoiceNumber
+    )} - ${sanitizeFilenamePart(firstRow['Consignee Name'], 'Consignee')}.pdf`;
+
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=Invoice-${invoiceNumber}.pdf`);
+    res.setHeader('Content-Disposition', `inline; filename="${exportFilename}"`);
     res.send(pdfBuffer);
   } catch (err) {
     console.error('Error generating PDF:', err);

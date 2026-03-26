@@ -32,26 +32,52 @@ function AppLoading() {
 }
 
 function AdminLayout({ authEnabled, onLogout }) {
+  const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const pageTitles = {
+    '/admin/create': 'Create Invoice',
+    '/admin/customers': 'Add Customer',
+    '/admin/lookup': 'Lookup Invoice',
+    '/admin/dashboard': 'Dashboard'
+  };
+
+  const currentTitle = pageTitles[location.pathname] || 'Admin';
+
   return (
     <div className="App">
       <nav className="navbar">
         <div className="navbar-content">
           <NavLink to="/admin/create" className="navbar-brand">
             <img src={`${process.env.PUBLIC_URL}/mae-logo.png`} alt={firmDetails.name} className="brand-logo" />
-            <div className="brand-copy">
-              <strong>{firmDetails.name}</strong>
-              <span>{firmDetails.address}</span>
-              <span>
-                GSTN: {firmDetails.gstn} | {firmDetails.contactNo}
-              </span>
-            </div>
           </NavLink>
-          <div className="nav-links">
+          <div className="navbar-page-title">{currentTitle}</div>
+          <button
+            type="button"
+            className={`menu-toggle ${mobileMenuOpen ? 'open' : ''}`}
+            onClick={() => setMobileMenuOpen((current) => !current)}
+            aria-label="Toggle menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+          <div className={`nav-links ${mobileMenuOpen ? 'open' : ''}`}>
             <NavLink
               to="/admin/create"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
               Create Invoice
+            </NavLink>
+            <NavLink
+              to="/admin/customers"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Add Customer
             </NavLink>
             <NavLink
               to="/admin/lookup"
@@ -65,20 +91,14 @@ function AdminLayout({ authEnabled, onLogout }) {
             >
               Dashboard
             </NavLink>
-            <NavLink
-              to="/admin/customers"
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-            >
-              Add Customer
-            </NavLink>
-            <NavLink to="/" className="nav-link">
-              Public Site
-            </NavLink>
             {authEnabled ? (
               <button type="button" className="nav-link nav-button" onClick={onLogout}>
                 Log Out
               </button>
             ) : null}
+            <NavLink to="/" className="nav-link">
+              Public Page
+            </NavLink>
           </div>
         </div>
       </nav>

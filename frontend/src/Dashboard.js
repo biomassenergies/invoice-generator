@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getDashboard } from './api';
-import firmDetails from './firmDetails';
 import './Dashboard.css';
 
 const monthLabels = {
@@ -136,17 +135,6 @@ function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-hero">
-        <div className="dashboard-hero-copy">
-          <p className="hero-kicker">Sales Dashboard</p>
-          <h1>{firmDetails.name}</h1>
-          <p>
-            Track revenue, concentration risk, dormant customers, market mix, and
-            data cleanup opportunities from your live invoice history.
-          </p>
-        </div>
-      </header>
-
       <div className="dashboard-shell">
         {error && <div className="dashboard-error">{error}</div>}
 

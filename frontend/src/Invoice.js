@@ -50,6 +50,19 @@ function Invoice() {
     loadData();
   }, []);
 
+  const buildPdfFilename = (documentNumber, consigneeName) => {
+    const sanitize = (value, fallback) =>
+      String(value || '')
+        .replace(/[\\/:*?"<>|]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim() || fallback;
+
+    return `${sanitize(documentNumber, invoiceNumber || 'Invoice')} - ${sanitize(
+      consigneeName,
+      'Consignee'
+    )}.pdf`;
+  };
+
   const getCustomerNameField = () =>
     customerHeaders.find((header) => header.toLowerCase().includes('name')) || 'Customer Name';
 
@@ -197,13 +210,13 @@ function Invoice() {
     calculateTotals(updated, customerState, transportValue);
   };
 
-  const downloadPDF = async (invNumber) => {
+  const downloadPDF = async (invNumber, fileName) => {
     try {
       const response = await downloadInvoicePDF(invNumber);
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Invoice-${invNumber}.pdf`);
+      link.setAttribute('download', fileName || `${invNumber}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.parentElement.removeChild(link);
@@ -237,6 +250,7 @@ function Invoice() {
       const customerNameField = getCustomerNameField();
       const consigneeName =
         selectedCustomer[customerNameField] || selectedCustomer['Customer Name'];
+      const pdfFileName = buildPdfFilename(despatchDocumentNo, consigneeName);
 
       const payload = {
         invoiceNumber,
@@ -291,7 +305,7 @@ function Invoice() {
       setTotals({ taxable: 0, sgst: 0, cgst: 0, igst: 0, transportValue: 0, grand: 0 });
 
       setTimeout(() => {
-        downloadPDF(invoiceNumber);
+        downloadPDF(invoiceNumber, pdfFileName);
       }, 500);
 
       setLoading(false);
@@ -306,7 +320,10 @@ function Invoice() {
       setError('Please save invoice first');
       return;
     }
-    downloadPDF(invoiceNumber);
+    const customerNameField = getCustomerNameField();
+    const consigneeName =
+      selectedCustomer?.[customerNameField] || selectedCustomer?.['Customer Name'] || '';
+    downloadPDF(invoiceNumber, buildPdfFilename(despatchDocumentNo, consigneeName));
   };
 
   if (loading && customers.length === 0) {
@@ -324,6 +341,42 @@ function Invoice() {
         <form onSubmit={handleSubmit} className="invoice-form">
           {error && <div className="alert alert-error">{error}</div>}
           {success && <div className="alert alert-success">{success}</div>}
+
+          <section className="form-section">
+            <h2>Customer Information</h2>
+            <div className="form-group">
+              <label>Customer *</label>
+              <select onChange={handleCustomerChange} required>
+                <option value="">Select Customer</option>
+                {customers.map((customer, index) => {
+                  const nameField = getCustomerNameField();
+                  const customerName =
+                    customer[nameField] || customer['Customer Name'] || `Customer ${index}`;
+                  return (
+                    <option key={index} value={customerName}>
+                      {customerName}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+
+            {selectedCustomer && (
+              <div className="customer-details">
+                <p>
+                  <strong>State: </strong>
+                  <span className="state-badge">{customerState}</span>
+                </p>
+                {suggestionsLoading && <p className="field-hint">Loading numbering suggestions...</p>}
+                <p style={{ fontSize: '0.9em', color: '#666' }}>
+                  GST Type:{' '}
+                  {String(customerState || '').trim().toUpperCase() === 'MAHARASHTRA'
+                    ? 'CGST + SGST'
+                    : 'IGST'}
+                </p>
+              </div>
+            )}
+          </section>
 
           <section className="form-section">
             <h2>Invoice Information</h2>
@@ -461,42 +514,6 @@ function Invoice() {
                 />
               </div>
             </div>
-          </section>
-
-          <section className="form-section">
-            <h2>Customer Information</h2>
-            <div className="form-group">
-              <label>Customer *</label>
-              <select onChange={handleCustomerChange} required>
-                <option value="">Select Customer</option>
-                {customers.map((customer, index) => {
-                  const nameField = getCustomerNameField();
-                  const customerName =
-                    customer[nameField] || customer['Customer Name'] || `Customer ${index}`;
-                  return (
-                    <option key={index} value={customerName}>
-                      {customerName}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            {selectedCustomer && (
-              <div className="customer-details">
-                <p>
-                  <strong>State: </strong>
-                  <span className="state-badge">{customerState}</span>
-                </p>
-                {suggestionsLoading && <p className="field-hint">Loading numbering suggestions...</p>}
-                <p style={{ fontSize: '0.9em', color: '#666' }}>
-                  GST Type:{' '}
-                  {String(customerState || '').trim().toUpperCase() === 'MAHARASHTRA'
-                    ? 'CGST + SGST'
-                    : 'IGST'}
-                </p>
-              </div>
-            )}
           </section>
 
           <section className="form-section">
