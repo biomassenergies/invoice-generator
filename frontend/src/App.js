@@ -13,6 +13,7 @@ import Invoice from './Invoice';
 import InvoiceLookup from './InvoiceLookup';
 import Dashboard from './Dashboard';
 import CustomerForm from './CustomerForm';
+import QuotationPage from './QuotationPage';
 import LoginPage from './LoginPage';
 import LandingPage from './LandingPage';
 import firmDetails from './firmDetails';
@@ -41,6 +42,7 @@ function AdminLayout({ authEnabled, onLogout }) {
 
   const pageTitles = {
     '/admin/create': 'Create Invoice',
+    '/admin/quotation': 'Create Quotation',
     '/admin/customers': 'Add Customer',
     '/admin/lookup': 'Lookup Invoice',
     '/admin/dashboard': 'Dashboard'
@@ -72,6 +74,12 @@ function AdminLayout({ authEnabled, onLogout }) {
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             >
               Create Invoice
+            </NavLink>
+            <NavLink
+              to="/admin/quotation"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+              Create Quotation
             </NavLink>
             <NavLink
               to="/admin/customers"
@@ -232,6 +240,7 @@ function AppShell() {
         >
           <Route index element={<Navigate to="/admin/create" replace />} />
           <Route path="create" element={<Invoice />} />
+          <Route path="quotation" element={<QuotationPage />} />
           <Route path="lookup" element={<InvoiceLookup />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="customers" element={<CustomerForm />} />

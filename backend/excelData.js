@@ -151,6 +151,23 @@ function saveInvoiceRow(rowData) {
   }
 }
 
+function getQuotations() {
+  try {
+    const workbook = XLSX.readFile(EXCEL_FILE);
+    const ws = workbook.Sheets['QUOTATION DETAILS'];
+    const data = ws ? XLSX.utils.sheet_to_json(ws) : [];
+    const headers = Object.keys(data[0] || {});
+
+    return {
+      headers,
+      data
+    };
+  } catch (err) {
+    console.error('Error getting quotations:', err);
+    return { headers: [], data: [] };
+  }
+}
+
 function saveCustomerRow(rowData) {
   try {
     const workbook = XLSX.readFile(EXCEL_FILE);
@@ -177,6 +194,32 @@ function saveCustomerRow(rowData) {
   }
 }
 
+function saveQuotationRow(rowData) {
+  try {
+    const workbook = XLSX.readFile(EXCEL_FILE);
+    let ws = workbook.Sheets['QUOTATION DETAILS'];
+
+    if (!ws) {
+      ws = XLSX.utils.aoa_to_sheet([Object.keys(rowData)]);
+      workbook.Sheets['QUOTATION DETAILS'] = ws;
+      if (!workbook.SheetNames.includes('QUOTATION DETAILS')) {
+        workbook.SheetNames.push('QUOTATION DETAILS');
+      }
+    }
+
+    const data = XLSX.utils.sheet_to_json(ws);
+    data.push(rowData);
+
+    ws = XLSX.utils.json_to_sheet(data);
+    workbook.Sheets['QUOTATION DETAILS'] = ws;
+    XLSX.writeFile(workbook, EXCEL_FILE);
+    return true;
+  } catch (err) {
+    console.error('Error saving quotation:', err.message);
+    return false;
+  }
+}
+
 /**
  * Check if invoice number exists
  */
@@ -198,7 +241,9 @@ module.exports = {
   getCustomers,
   getProducts,
   getInvoices,
+  getQuotations,
   saveCustomerRow,
   saveInvoiceRow,
+  saveQuotationRow,
   invoiceExists
 };

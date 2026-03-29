@@ -6,6 +6,7 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 const generateInvoiceHTML = require('./templates/invoiceTemplate');
+const generateQuotationHTML = require('./templates/quotationTemplate');
 const {
   classifyGoogleError,
   getSheetData,
@@ -16,8 +17,10 @@ const {
 const {
   getCustomers: getExcelCustomers,
   getInvoices: getExcelInvoices,
+  getQuotations: getExcelQuotations,
   getProducts: getExcelProducts,
   saveCustomerRow,
+  saveQuotationRow,
   saveInvoiceRow,
   invoiceExists: excelInvoiceExists
 } = require('./excelData');
@@ -673,6 +676,48 @@ app.get('/api/invoices', async (req, res) => {
   }
 });
 
+app.get('/api/quotations', async (req, res) => {
+  try {
+    let quotationRows;
+    if (DATA_MODE === 'local') {
+      quotationRows = getExcelQuotations().data;
+    } else {
+      quotationRows = (await getSheetData('QUOTATION DETAILS')).data;
+    }
+
+    const quotationMap = new Map();
+    quotationRows.forEach((row) => {
+      const quoteNumber = String(row['Quote Number'] || '').trim();
+      if (!quoteNumber || quotationMap.has(quoteNumber)) {
+        return;
+      }
+
+      quotationMap.set(quoteNumber, {
+        quoteNumber,
+        quoteDate: String(row['Quote Date'] || '').trim(),
+        discussionDate: String(row['Discussion Date'] || '').trim(),
+        companyName: String(row['Recipient Company'] || '').trim(),
+        grandTotal: parseNumericValue(row['Grand Total'])
+      });
+    });
+
+    const quotations = [...quotationMap.values()].sort((a, b) => {
+      const dateA = new Date(a.quoteDate).getTime() || 0;
+      const dateB = new Date(b.quoteDate).getTime() || 0;
+      return dateB - dateA || b.quoteNumber.localeCompare(a.quoteNumber);
+    });
+
+    res.json(quotations);
+  } catch (err) {
+    if (String(err.message || '').includes('Sheet "QUOTATION DETAILS" not found')) {
+      return res.json([]);
+    }
+
+    console.error('Error fetching quotations:', err);
+    res.status(500).json({ error: 'Error fetching quotations', details: err.message });
+  }
+});
+
 app.get('/api/invoice-suggestions', async (req, res) => {
   try {
     const customerCode = String(req.query.customerCode || '').trim();
@@ -1169,6 +1214,164 @@ app.post('/api/create-invoice', async (req, res) => {
   } catch (err) {
     console.error('Error creating invoice:', err);
     res.status(500).json({ error: 'Error creating invoice', details: err.message });
+  }
+});
+
+// ============================================================================
+// QUOTATION GENERATION ENDPOINT
+// ============================================================================
+
+app.post('/api/quotation/pdf', async (req, res) => {
+  let browser;
+
+  try {
+    const {
+      quoteNumber = '',
+      quoteDate = '',
+      discussionDate = '',
+      recipient = {},
+      items = [],
+      notes = {}
+    } = req.body || {};
+
+    if (!recipient.companyName || !items.length) {
+      return res.status(400).json({ error: 'Recipient company and at least one item are required' });
+    }
+
+    const normalizedItems = items
+      .map((item) => {
+        const quantity = parseNumericValue(item.quantity);
+        const unitRate = parseNumericValue(item.unitRate);
+
+        return {
+          product: String(item.product || '').trim(),
+          quantity,
+          unitRate,
+          totalAmount: quantity * unitRate
+        };
+      })
+      .filter((item) => item.product);
+
+    if (!normalizedItems.length) {
+      return res.status(400).json({ error: 'At least one valid quotation item is required' });
+    }
+
+    const grandTotal = normalizedItems.reduce((sum, item) => sum + item.totalAmount, 0);
+    const quotationData = {
+      quoteNumber: String(quoteNumber || '').trim() || `QT-${Date.now()}`,
+      quoteDate: String(quoteDate || '').trim(),
+      discussionDate: String(discussionDate || '').trim(),
+      recipient: {
+        companyName: String(recipient.companyName || '').trim(),
+        gstin: String(recipient.gstin || '').trim(),
+        address: String(recipient.address || '').trim()
+      },
+      items: normalizedItems,
+      totals: {
+        grandTotal
+      },
+      notes: {
+        transportNote:
+          String(notes.transportNote || '').trim() ||
+          'Rate quoted above is exclusive of transport cost and loading/unloading charges unless agreed separately.',
+        deliveryLeadTime:
+          String(notes.deliveryLeadTime || '').trim() ||
+          'The order must be raised not less than 3 day(s) before the delivery date.',
+        paymentTerms:
+          String(notes.paymentTerms || '').trim() ||
+          'Payment to be made within 6 to 15 days from PO Release Date or as mutually agreed.',
+        additionalNotes: String(notes.additionalNotes || '').trim(),
+        transportTerm:
+          'Rate quoted above is exclusive of the transport cost and loading/unloading charges.',
+        orderTerm:
+          'The order must be raised not less than 3 day(s) before the delivery date.',
+        orderConfirmationTerm:
+          'A phone conversation among the representatives from either party would be enough to place the order. A Purchase Order/Work Order must be raised after the conversation from the customer.',
+        paymentTerm:
+          'Payment Terms: Payment to be made within 6 to 15 days from PO Release Date (OR) mutually agreed site terms.',
+        declaration:
+          'Declaration: I/We agree upon the aforementioned rate and payment condition and will adhere to mutual consent from both the representatives.'
+      }
+    };
+
+    if (DATA_MODE === 'local') {
+      normalizedItems.forEach((item) => {
+        saveQuotationRow({
+          'Quote Number': quotationData.quoteNumber,
+          'Quote Date': quotationData.quoteDate,
+          'Discussion Date': quotationData.discussionDate,
+          'Recipient Company': quotationData.recipient.companyName,
+          'Recipient GSTIN': quotationData.recipient.gstin,
+          'Recipient Address': quotationData.recipient.address,
+          Product: item.product,
+          Quantity: item.quantity,
+          'Unit Rate': item.unitRate,
+          'Total Amount': item.totalAmount,
+          'Grand Total': grandTotal,
+          'Transport Note': quotationData.notes.transportNote,
+          'Delivery Lead Time': quotationData.notes.deliveryLeadTime,
+          'Payment Terms': quotationData.notes.paymentTerms,
+          'Additional Notes': quotationData.notes.additionalNotes
+        });
+      });
+    } else {
+      await Promise.all(
+        normalizedItems.map((item) =>
+          addRowToSheet('QUOTATION DETAILS', {
+            'Quote Number': quotationData.quoteNumber,
+            'Quote Date': quotationData.quoteDate,
+            'Discussion Date': quotationData.discussionDate,
+            'Recipient Company': quotationData.recipient.companyName,
+            'Recipient GSTIN': quotationData.recipient.gstin,
+            'Recipient Address': quotationData.recipient.address,
+            Product: item.product,
+            Quantity: item.quantity,
+            'Unit Rate': item.unitRate,
+            'Total Amount': item.totalAmount,
+            'Grand Total': grandTotal,
+            'Transport Note': quotationData.notes.transportNote,
+            'Delivery Lead Time': quotationData.notes.deliveryLeadTime,
+            'Payment Terms': quotationData.notes.paymentTerms,
+            'Additional Notes': quotationData.notes.additionalNotes
+          })
+        )
+      );
+    }
+
+    const html = generateQuotationHTML(quotationData);
+    browser = await launchPdfBrowser();
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '10px',
+        bottom: '10px',
+        left: '10px',
+        right: '10px'
+      }
+    });
+
+    await browser.close();
+    browser = null;
+
+    const exportFilename = `Quotation - ${sanitizeFilenamePart(
+      quotationData.recipient.companyName,
+      'Customer'
+    )}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${exportFilename}"`);
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error('Error generating quotation PDF:', err);
+    if (browser) {
+      await browser.close();
+    }
+    res.status(500).json({ error: 'Error generating quotation PDF', details: err.message });
   }
 });
 

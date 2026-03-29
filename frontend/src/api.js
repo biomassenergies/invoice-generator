@@ -31,11 +31,14 @@ export const createCustomer = (data) => API.post('/customers', data);
 // Products
 export const getProducts = () => API.get('/products');
 export const listInvoices = () => API.get('/invoices');
+export const listQuotations = () => API.get('/quotations');
 export const getDashboard = (params) => API.get('/dashboard', { params });
 export const getInvoiceSuggestions = (params) => API.get('/invoice-suggestions', { params });
 
 // Invoice operations
 export const createInvoice = (data) => API.post('/create-invoice', data);
+export const downloadQuotationPDF = (data) =>
+  API.post('/quotation/pdf', data, { responseType: 'blob' });
 export const getInvoice = (invoiceNumber) =>
   API.get(`/invoice/${encodeURIComponent(invoiceNumber)}`);
 export const downloadInvoicePDF = (invoiceNumber) => 

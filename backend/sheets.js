@@ -207,6 +207,26 @@ async function getGoogleSheetValues(sheetName) {
   return data.values || [];
 }
 
+async function createGoogleSheetTab(sheetName) {
+  await sheetsRequest(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}:batchUpdate`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        requests: [
+          {
+            addSheet: {
+              properties: {
+                title: sheetName
+              }
+            }
+          }
+        ]
+      })
+    }
+  );
+}
+
 function valuesToStructuredData(values) {
   const headers = normalizeHeaders(values[0] || []);
   const dataRows = values
@@ -411,12 +431,17 @@ async function getSheetData(sheetName) {
 
 async function addRowToSheet(sheetName, rowData) {
   try {
-    const result = await getSheet(sheetName);
+    const source = await getSource();
 
-    if (result.sourceType === 'google_sheet') {
+    if (source.type === 'google_sheet') {
+      if (!source.doc.sheetsByTitle[sheetName]) {
+        await createGoogleSheetTab(sheetName);
+      }
+
       const values = await getGoogleSheetValues(sheetName);
       const headers = normalizeHeaders(values[0] || []);
-      const row = headers.map(header => rowData[header] ?? '');
+      const headerOrder = headers.length ? headers : Object.keys(rowData);
+      const row = headerOrder.map(header => rowData[header] ?? '');
       const range = encodeURIComponent(`${sheetName}!A:ZZ`);
 
       await sheetsRequest(
@@ -431,23 +456,24 @@ async function addRowToSheet(sheetName, rowData) {
       return;
     }
 
-    const headers = getWorksheetHeaderValues(result.worksheet);
+    const worksheet = source.workbook.Sheets[sheetName];
+    const headers = worksheet ? getWorksheetHeaderValues(worksheet) : [];
     const headerOrder = headers.length
       ? [...headers, ...Object.keys(rowData).filter(key => !headers.includes(key))]
       : Object.keys(rowData);
 
-    const existingRows = worksheetToStructuredData(result.worksheet).data;
+    const existingRows = worksheet ? worksheetToStructuredData(worksheet).data : [];
     const nextRows = [...existingRows, rowData];
     const nextWorksheet = XLSX.utils.json_to_sheet(nextRows, {
       header: headerOrder
     });
 
-    result.workbook.Sheets[sheetName] = nextWorksheet;
-    if (!result.workbook.SheetNames.includes(sheetName)) {
-      result.workbook.SheetNames.push(sheetName);
+    source.workbook.Sheets[sheetName] = nextWorksheet;
+    if (!source.workbook.SheetNames.includes(sheetName)) {
+      source.workbook.SheetNames.push(sheetName);
     }
 
-    await uploadWorkbook(result.workbook);
+    await uploadWorkbook(source.workbook);
   } catch (err) {
     console.error(`Error adding row to sheet "${sheetName}":`, err);
     throw err;
